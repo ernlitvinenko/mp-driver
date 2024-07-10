@@ -1,0 +1,7 @@
+query GetActiveSubtaskID($userID: String!) {
+    task(userId: $userID, isActive: true) {
+        activeSubtask {
+            id
+        }
+    }
+}

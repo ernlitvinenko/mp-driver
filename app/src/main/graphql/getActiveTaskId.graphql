@@ -1,0 +1,15 @@
+query GetActiveTaskId($userID: String!) {
+    task(isActive: true, userId: $userID) {
+        id
+    }
+    completedTasks: tasks(userId: $userID, isCompleted: true) {
+        id
+        startPln
+    }
+
+    plannedTasks: tasks(userId: $userID, isPlanned: true) {
+        id,
+        startPln
+    }
+
+}

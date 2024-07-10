@@ -1,5 +1,6 @@
 package com.example.mpdriver.components
 
+import android.util.Log
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -17,6 +18,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Notifications
@@ -39,13 +41,20 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.onFocusEvent
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.OffsetMapping
+import androidx.compose.ui.text.input.TransformedText
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -54,9 +63,17 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.apollographql.apollo3.api.ApolloResponse
+import com.apollographql.apollo3.api.toInput
+import com.example.mpdriver.GetSubtaskByIDQuery
+import com.example.mpdriver.GetTaskByIdQuery
 import com.example.mpdriver.R
 import com.example.mpdriver.api.Subtasks
+import com.example.mpdriver.api.apolloClient
 import com.example.mpdriver.recievers.TimeTickReciever
+import com.example.mpdriver.storage.CreateUpdateTaskData
+import com.example.mpdriver.storage.Database
+import com.example.mpdriver.type.StatusEnumQl
 import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
@@ -64,10 +81,13 @@ import kotlinx.coroutines.runBlocking
 import kotlinx.datetime.Clock
 import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.LocalDateTime
+import kotlinx.datetime.TimeZone
 import kotlinx.datetime.UtcOffset
 import kotlinx.datetime.asTimeZone
 import kotlinx.datetime.format.byUnicodePattern
+import kotlinx.datetime.format.char
 import kotlinx.datetime.toInstant
+import kotlinx.datetime.toLocalDateTime
 import kotlinx.datetime.until
 import kotlin.math.abs
 
@@ -76,7 +96,7 @@ import kotlin.math.abs
 fun Subtask(
     modifier: Modifier = Modifier,
     children: @Composable () -> Unit = {},
-    subtask: Subtasks = Subtasks(1, startPln = "2024-06-01T00:00", endPln = "2024-06-10T00:00"),
+    subtaskID: Long = 0,
     footerButton: @Composable () -> Unit = {}
 ) {
 
@@ -91,13 +111,39 @@ fun Subtask(
     var nowTime by remember {
         mutableStateOf(Clock.System.now())
     }
+    var subtaskResponse by remember {
+        mutableStateOf<GetSubtaskByIDQuery.Subtask?>(null)
+    }
+
+    LaunchedEffect(Unit) {
+
+        val sbtDB = Database.subtasks.find { it.id == subtaskID.toString() }
+
+        sbtDB?.let {
+            subtaskResponse = GetSubtaskByIDQuery.Subtask(
+                sbtDB.id,
+                sbtDB.text,
+                startPln = sbtDB.startPln,
+                endPln = sbtDB.endPln,
+                status = sbtDB.status
+            )
+
+        }
+//         subtaskResponse = apolloClient.query(GetSubtaskByIDQuery("1125904232173609", subtaskID.toString())).execute()
+    }
 
     TimeTickReciever.registerHandler {
         nowTime = Clock.System.now()
     }
 
-    val startPln = LocalDateTime.parse(subtask.startPln!!)
-    val endPln = LocalDateTime.parse(subtask.endPln!!)
+    var startPln: LocalDateTime = Clock.System.now().toLocalDateTime(TimeZone.UTC)
+    var endPln: LocalDateTime = Clock.System.now().toLocalDateTime(TimeZone.UTC)
+
+    subtaskResponse?.let {
+        startPln = LocalDateTime.parse(subtaskResponse?.startPln.toString())
+        endPln = LocalDateTime.parse(subtaskResponse?.endPln.toString())
+    }
+
 
     val dateFormat = LocalDateTime.Format {
         byUnicodePattern("d.MM.yyyy")
@@ -119,10 +165,10 @@ fun Subtask(
 
 
     val status = when {
-        subtask.status == "Completed" && !isDelay -> TaskStatus.SUCCESS
-        subtask.status == "Completed" && isDelay -> TaskStatus.WARNING
-        subtask.status == "Cancelled" -> TaskStatus.WARNING
-        subtask.status == "InProgress" || subtask.status == "NotDefined" && isDelay -> TaskStatus.DANGER
+        subtaskResponse?.status == StatusEnumQl.COMPLETED && !isDelay -> TaskStatus.SUCCESS
+        subtaskResponse?.status == StatusEnumQl.COMPLETED && isDelay -> TaskStatus.WARNING
+        subtaskResponse?.status == StatusEnumQl.CANCELLED -> TaskStatus.WARNING
+        (subtaskResponse?.status == StatusEnumQl.IN_PROGRESS || subtaskResponse?.status == StatusEnumQl.NOT_DEFINED) && isDelay -> TaskStatus.DANGER
         else -> TaskStatus.DEFAULT
     }
 
@@ -151,7 +197,7 @@ fun Subtask(
             ) {
                 Text(
                     modifier = Modifier.weight(1f),
-                    text = "${subtask.text}",
+                    text = "${subtaskResponse?.text}",
                     fontWeight = FontWeight.Bold,
                     fontSize = 20.sp
                 )
@@ -259,8 +305,8 @@ fun Subtask(
         }
     }
 
-    if (isActionVisible) {
-        IsSubtaskCompletedAction(setStateAction = { isActionVisible = false }, subtask)
+    if (isActionVisible && subtaskResponse != null) {
+        IsSubtaskCompletedAction(setStateAction = { isActionVisible = false }, subtaskResponse!!)
     }
 
 }
@@ -268,7 +314,10 @@ fun Subtask(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun IsSubtaskCompletedAction(setStateAction: (Boolean) -> Unit = { }, subtask: Subtasks) {
+fun IsSubtaskCompletedAction(
+    setStateAction: (Boolean) -> Unit = { },
+    subtask: GetSubtaskByIDQuery.Subtask
+) {
     var currentStep by remember {
         mutableStateOf(0)
     }
@@ -318,6 +367,10 @@ fun IsSubtaskCompletedAction(setStateAction: (Boolean) -> Unit = { }, subtask: S
                     composable("success") {
                         SuccessStep(subtask = subtask, controller = actionController)
                         title = "Когда вы выполнили подзадачу?"
+                        isFullScreen = true
+                        LaunchedEffect(sheetState) {
+                            sheetState.expand()
+                        }
                     }
                     composable("failure") {
                         isFullScreen = true
@@ -339,13 +392,13 @@ fun IsSubtaskCompletedAction(setStateAction: (Boolean) -> Unit = { }, subtask: S
 
 
 @Composable
-fun InitialStep(subtask: Subtasks, controller: NavHostController) {
+fun InitialStep(subtask: GetSubtaskByIDQuery.Subtask, controller: NavHostController) {
     Column {
         JDEButton(type = ButtonType.SUCCESS, onClick = { controller.navigate("success") }) {
             Text(text = "Подзадача выполнена", fontSize = 15.sp, fontWeight = FontWeight.Bold)
         }
         Spacer(modifier = Modifier.height(10.dp))
-        JDEButton(type = ButtonType.WARNING, onClick = {controller.navigate("failure")}) {
+        JDEButton(type = ButtonType.WARNING, onClick = { controller.navigate("failure") }) {
             Text(text = "У меня возникла проблема", fontSize = 15.sp, fontWeight = FontWeight.Bold)
         }
         Spacer(modifier = Modifier.height(40.dp))
@@ -354,10 +407,9 @@ fun InitialStep(subtask: Subtasks, controller: NavHostController) {
 }
 
 
-@Preview(showBackground = true)
 @Composable
 fun SuccessStep(
-    subtask: Subtasks = Subtasks(),
+    subtask: GetSubtaskByIDQuery.Subtask,
     controller: NavHostController = rememberNavController()
 ) {
 
@@ -402,26 +454,96 @@ fun SuccessStep(
             Spacer(modifier = Modifier.height(10.dp))
 
             Row(Modifier.fillMaxWidth()) {
-                TextInput(modifier = Modifier.weight(.66f), date, { date = it }, "Дата")
+                TextInput(modifier = Modifier.weight(.66f), date, {
+                    date = it.filter { it.isDigit() }
+                }, "Дата")
                 Spacer(modifier = Modifier.width(10.dp))
-                TextInput(modifier = Modifier.weight(.33f), time, { date = time }, "Время")
+                TextInput(
+                    modifier = Modifier.weight(.33f),
+                    time,
+                    { time = it.filter { it.isDigit() } },
+                    "Время"
+                )
             }
 
         }
 
         Spacer(modifier = Modifier.height(20.dp))
-        ActiveButton(onClick = { /*TODO*/ }, text = "Сохранить", modifier = Modifier.fillMaxWidth())
+        ActiveButton(onClick = {
+            val task = Database.tasks.find {
+                it.subtasks.find { sbt ->
+                    sbt.id == subtask.id
+                } != null
+            }
+
+            val dt = LocalDateTime.parse(date + "T" + time, LocalDateTime.Format {
+                dayOfMonth()
+                monthNumber()
+                year()
+                char('T')
+                hour()
+                minute()
+            }).toInstant(TimeZone.UTC).toEpochMilliseconds()
+
+            task?.let {
+                Database.createUpdateTaskDataLocally(
+                    CreateUpdateTaskData(
+                        subtask.id.toLong(),
+                        dt = dt,
+                        status = "Completed"
+                    )
+                )
+
+                if (subtask.id == task.subtasks.last().id) {
+                    Database.createUpdateTaskDataLocally(
+                        CreateUpdateTaskData(
+                            task.id.toLong(),
+                            dt = dt,
+                            status = "Completed"
+                        )
+                    )
+                    return@let
+                }
+                val curr_sbt_idx = task.subtasks.indexOf(task.subtasks.find { it.id == subtask.id })
+
+                Database.createUpdateTaskDataLocally(
+                    CreateUpdateTaskData(
+                        task.subtasks[curr_sbt_idx + 1].id.toLong(),
+                        dt,
+                        status = "InProgress"
+                    )
+                )
+
+            }
+
+
+        }, text = "Сохранить", modifier = Modifier.fillMaxWidth())
     }
 
 
 }
 
+fun transformText(it: String): String {
+    var digits = it.filter { it.isDigit() }
+    if (digits.length > 8) {
+        digits = digits.slice(0..<8)
+    }
+
+    var data = when (digits.length) {
+        in 0..2 -> "${digits}"
+        in 3..4 -> "${digits.substring(0..<2)}.${digits.substring(2)}"
+        in 5..8 -> "${digits.substring(0..<2)}.${digits.substring(2..<4)}.${digits.substring(4)}"
+        else -> digits
+    }
+    println(data)
+    return data
+
+}
 
 @OptIn(ExperimentalMaterial3Api::class)
-@Preview(showBackground = true)
 @Composable
 fun FailureStep(
-    subtask: Subtasks = Subtasks(),
+    subtask: GetSubtaskByIDQuery.Subtask,
     controller: NavHostController = rememberNavController()
 ) {
 
@@ -440,7 +562,8 @@ fun FailureStep(
             color = Color.Gray
         )
         Spacer(modifier = Modifier.height(40.dp))
-        TextField(value = failureDesk,
+        TextField(
+            value = failureDesk,
             onValueChange = { failureDesk = it },
             shape = RoundedCornerShape(10.dp),
             modifier = Modifier.fillMaxWidth(),
@@ -466,10 +589,12 @@ fun FailureStep(
                 focusedIndicatorColor = Color.Transparent,
                 unfocusedIndicatorColor = Color.Transparent
             ),
-            trailingIcon = {Icon(
-                painter = painterResource(id = R.drawable.calendar_default),
-                contentDescription = ""
-            )}
+            trailingIcon = {
+                Icon(
+                    painter = painterResource(id = R.drawable.calendar_default),
+                    contentDescription = ""
+                )
+            }
         )
         Spacer(modifier = Modifier.height(10.dp))
 
@@ -485,15 +610,19 @@ fun FailureStep(
                 focusedIndicatorColor = Color.Transparent,
                 unfocusedIndicatorColor = Color.Transparent
             ),
-            trailingIcon = {Icon(painter = painterResource(id = R.drawable.calendar_default),
-                contentDescription = ""
-            )}
+            trailingIcon = {
+                Icon(
+                    painter = painterResource(id = R.drawable.calendar_default),
+                    contentDescription = ""
+                )
+            }
         )
         Spacer(modifier = Modifier.height(20.dp))
         ActiveButton(onClick = { /*TODO*/ }, text = "Отправить", modifier = Modifier.fillMaxWidth())
     }
 }
 
+@OptIn(ExperimentalComposeUiApi::class)
 @Preview(showBackground = true)
 @Composable
 fun TextInput(
@@ -507,6 +636,8 @@ fun TextInput(
         mutableStateOf(true)
     }
 
+    val kbController = LocalSoftwareKeyboardController.current
+
 
     BasicTextField(
         modifier = modifier
@@ -515,7 +646,13 @@ fun TextInput(
             },
         value = value,
         onValueChange = onValueChange,
-        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+        keyboardOptions = KeyboardOptions(
+            keyboardType = KeyboardType.Number,
+            imeAction = ImeAction.Done
+        ),
+        keyboardActions = KeyboardActions(onDone = {
+            kbController?.hide()
+        }),
         decorationBox = {
             Box(
                 Modifier
@@ -525,16 +662,16 @@ fun TextInput(
                     .padding(horizontal = 10.dp, vertical = 5.dp)
             ) {
                 Text(
-                    modifier = Modifier.align(if (isFocused) Alignment.TopStart else Alignment.CenterStart),
+                    modifier = Modifier.align(if (isFocused || value != "") Alignment.TopStart else Alignment.CenterStart),
                     text = placeholder,
                     fontWeight = FontWeight.Normal,
-                    fontSize = if (isFocused) 13.sp else 18.sp,
+                    fontSize = if (isFocused || value != "") 13.sp else 18.sp,
                     color = Color.Gray
                 )
-                if (isFocused) {
+                if (isFocused || value != "") {
                     Text(
                         modifier = Modifier.align(Alignment.BottomStart),
-                        text = value,
+                        text = transformText(value),
                         fontSize = 18.sp,
                         fontWeight = FontWeight.Bold
                     )

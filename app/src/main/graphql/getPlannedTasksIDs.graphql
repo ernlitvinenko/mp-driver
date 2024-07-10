@@ -1,0 +1,8 @@
+query GetPlannedTasksIDs($userID: String!) {
+    tasks(userId: $userID, isPlanned:true) {
+        id
+        subtasks {
+            id
+        }
+    }
+}

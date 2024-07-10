@@ -1,7 +1,9 @@
 plugins {
     alias(libs.plugins.android.application)
+    id("com.google.gms.google-services")
     alias(libs.plugins.jetbrains.kotlin.android)
     alias(libs.plugins.kotlinx.serialization)
+    id("com.apollographql.apollo3").version("3.8.3")
 }
 
 android {
@@ -50,8 +52,13 @@ android {
     }
 }
 
-dependencies {
+apollo {
+    service("service") {
+        packageName.set("com.example.mpdriver")
+    }
+}
 
+dependencies {
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)
@@ -76,4 +83,8 @@ dependencies {
     implementation(libs.kotlinx.datetime)
     implementation(libs.yandex.maps)
     implementation(libs.kotlin.coroutines)
+    implementation(platform("com.google.firebase:firebase-bom:33.1.1"))
+    implementation("com.apollographql.apollo3:apollo-runtime:3.8.3")
+    implementation("ru.gildor.coroutines:kotlin-coroutines-okhttp:1.0")
+
 }

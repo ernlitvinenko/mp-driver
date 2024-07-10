@@ -18,6 +18,7 @@ import okhttp3.Response
 import okhttp3.internal.EMPTY_REQUEST
 import java.io.IOException
 import java.lang.reflect.Type
+import java.util.concurrent.TimeUnit
 
 
 data class Langs(
@@ -41,11 +42,10 @@ inline fun <reified T> Response.parseList(): List<T> {
 
 
 open class Api(val ctx: Context) {
-    val kv = MMKV.defaultMMKV()
 
     val clientCheckAuth = OkHttpClient.Builder().build()
 
-    val client = OkHttpClient.Builder()
+    val client = OkHttpClient.Builder().connectTimeout(60, TimeUnit.SECONDS).readTimeout(30, TimeUnit.SECONDS).writeTimeout(30 ,TimeUnit.SECONDS)
         .addInterceptor { chain ->
             val req = chain.request().newBuilder()
                 .addHeader("Authorization", "Bearer ${Database.access_token}")
@@ -55,7 +55,7 @@ open class Api(val ctx: Context) {
         .build()
 
 
-    val BASE_URL = "http://147.45.107.119:8000/api/v1"
+    val BASE_URL = "http://192.168.0.101:8000/api/v1"
 
     fun performRequest(clientReq: Request, errorHandler: (Exception) -> Unit = {}, handler: (Response) -> Unit) {
         client.newCall(clientReq).enqueue(object : Callback {

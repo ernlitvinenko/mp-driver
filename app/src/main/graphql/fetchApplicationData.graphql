@@ -1,0 +1,58 @@
+query fetchApplicationData ($userID: String!) {
+    tasks(userId: $userID) {
+        id
+        startPln
+        endPln
+        startFact
+        endFact
+        status
+        taskType
+        text
+
+        events {
+            id
+        }
+
+        subtasks {
+            id
+        }
+
+        route {
+            temperatureProperty
+            name
+
+            trailer {
+                gost
+            }
+
+            truck {
+                gost
+            }
+        }
+    }
+    subtasks(userId: $userID) {
+        id
+        startPln
+        endPln
+        startFact
+        endFact
+        status
+        taskType
+        text
+        station {
+            name
+            location {
+                lat
+                lon
+            }
+        }
+    }
+
+    notes(userId: $userID) {
+        id
+        taskId
+        noteStatus
+        tip
+        text
+    }
+}

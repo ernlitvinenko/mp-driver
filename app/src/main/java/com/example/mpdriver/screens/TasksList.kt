@@ -16,6 +16,7 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -28,17 +29,25 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
+import com.apollographql.apollo3.api.ApolloResponse
+import com.example.mpdriver.GetPlannedTasksIDsQuery
+import com.example.mpdriver.GetTaskByIdQuery
 import com.example.mpdriver.api.TaskApi
 import com.example.mpdriver.api.TaskResponse
+import com.example.mpdriver.api.apolloClient
 import com.example.mpdriver.components.ActiveButton
 import com.example.mpdriver.components.HeaderTabs
 import com.example.mpdriver.components.HeaderTabsData
 import com.example.mpdriver.components.Layout
 import com.example.mpdriver.components.StaleButton
 import com.example.mpdriver.components.Task
+import com.example.mpdriver.storage.CreateUpdateTaskData
 import com.example.mpdriver.storage.Database
+import com.example.mpdriver.type.StatusEnumQl
 import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.launch
+import kotlinx.datetime.Clock
+import java.time.LocalDateTime
 
 
 @Composable
@@ -50,26 +59,41 @@ fun TasksList(modifier: Modifier = Modifier, hostController: NavHostController) 
     }
 
 
-    var itemsList by remember {
-        mutableStateOf<List<TaskResponse>>(emptyList())
+    var itemsListResponse by remember {
+        mutableStateOf(emptyList<GetPlannedTasksIDsQuery.Task>())
     }
-    api.getPlannedTasks {
-        itemsList = it
-        isLoading = false
-    }
+
 
     var activeTab by remember {
         mutableIntStateOf(0)
     }
 
+    LaunchedEffect(Unit) {
+        val d = Database.tasks.filter { it -> it.status == StatusEnumQl.NOT_DEFINED}
+
+        itemsListResponse = when(d.count())  {
+            0 -> emptyList()
+            else -> d.map {
+                val sbts = it.subtasks.map {sbt ->
+                    GetPlannedTasksIDsQuery.Subtask(sbt.id)
+                }
+                GetPlannedTasksIDsQuery.Task(id = it.id, sbts)
+            }
+        }
+        isLoading = false
+    }
+
 
     if(isLoading) {
-        Column (Modifier.fillMaxWidth().padding(vertical = 60.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+        Column (
+            Modifier
+                .fillMaxWidth()
+                .padding(vertical = 60.dp), horizontalAlignment = Alignment.CenterHorizontally) {
             CircularProgressIndicator(color = Color(0xFFE5332A))
         }
         return
     }
-    Layout(dataList = itemsList, header = {
+    Layout(dataList = itemsListResponse, header = {
         HeaderTabs(
             tabsData = listOf(
                 HeaderTabsData(0, "Запланированные"),
@@ -79,15 +103,24 @@ fun TasksList(modifier: Modifier = Modifier, hostController: NavHostController) 
             activeTab = it
         }
     }) {
-        Task(Modifier.padding(bottom = 10.dp), taskResponse = it) {
+        Task(Modifier.padding(bottom = 10.dp), task_id = it.id.toLong()) {
             when (activeTab) {
                 0 -> Button(
                     onClick = {
-                            api.setTaskStatusInProgress(it.id!!) {
-                                MainScope().launch {
-                                    hostController.navigate("feed")
-                                }
-                            }
+                              Database.createUpdateTaskDataLocally(
+                                  CreateUpdateTaskData(
+                                      it.id.toLong(),
+                                      Clock.System.now().toEpochMilliseconds(),
+                                      "InProgress"
+                                      )
+                              )
+                                Database.createUpdateTaskDataLocally(
+                                    CreateUpdateTaskData(
+                                        it.subtasks[0].id.toLong(), Clock.System.now().toEpochMilliseconds(), "InProgress",
+                                    )
+                                )
+                            hostController.navigate("feed")
+
                     },
                     colors = ButtonDefaults.buttonColors(
                         contentColor = Color.White,
@@ -96,7 +129,7 @@ fun TasksList(modifier: Modifier = Modifier, hostController: NavHostController) 
                         disabledContainerColor = Color.Gray
                     ),
                     shape = RoundedCornerShape(10.dp),
-                    enabled = if (Database.tasks.filter { it.status == "InProgress" }.count() >= 1) false else true,
+//                    enabled = if (Database.tasks.filter { it.status == "InProgress" }.count() >= 1) false else true,
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Text(text = "Приступить к выполнению")

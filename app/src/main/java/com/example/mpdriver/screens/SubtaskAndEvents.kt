@@ -25,6 +25,7 @@ import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -40,6 +41,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
+import com.example.mpdriver.FetchApplicationDataQuery
 import com.example.mpdriver.api.Subtasks
 import com.example.mpdriver.api.TaskApi
 import com.example.mpdriver.components.ComposableLifecycle
@@ -47,6 +49,8 @@ import com.example.mpdriver.components.HeaderTabs
 import com.example.mpdriver.components.HeaderTabsData
 import com.example.mpdriver.components.Layout
 import com.example.mpdriver.components.Subtask
+import com.example.mpdriver.storage.Database
+import kotlinx.datetime.LocalDateTime
 
 
 @Preview(showBackground = true)
@@ -65,8 +69,9 @@ fun SubtaskScreen(taskId: Long = 0) {
 
 
     var datalist by remember {
-        mutableStateOf<List<Subtasks>>(mutableListOf())
+        mutableStateOf(emptyList<FetchApplicationDataQuery.Subtask1>())
     }
+
     var activeTab by remember {
         mutableStateOf(0)
     }
@@ -74,25 +79,24 @@ fun SubtaskScreen(taskId: Long = 0) {
     val listState = rememberLazyListState()
     var offset = listState.firstVisibleItemScrollOffset + listState.firstVisibleItemIndex
 
-    val tabsData = listOf<HeaderTabsData>(HeaderTabsData(0, "Подзадачи"), HeaderTabsData(1, "События"))
+    val tabsData =
+        listOf<HeaderTabsData>(HeaderTabsData(0, "Подзадачи"), HeaderTabsData(1, "События"))
 
-    ComposableLifecycle { _, event ->
-        when (event) {
-            Lifecycle.Event.ON_CREATE -> {
-                api.getSubtasks(taskId) {
-                    datalist = it
-                    isLoading = false
-                }
-            }
-            else -> {}
-        }
+    LaunchedEffect(Unit) {
+        val task = Database.tasks.find { it.id == taskId.toString() }
+        datalist = Database.subtasks.filter { sbt ->
+            task!!.subtasks.find { it.id == sbt.id } != null
+        }.sortedBy { LocalDateTime.parse(it.startPln.toString()) }
+        isLoading = false
     }
 
-    if(isLoading) {
-        Column (
+
+    if (isLoading) {
+        Column(
             Modifier
                 .fillMaxWidth()
-                .padding(vertical = 60.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+                .padding(vertical = 60.dp), horizontalAlignment = Alignment.CenterHorizontally
+        ) {
             CircularProgressIndicator(color = Color(0xFFE5332A))
         }
         return
@@ -100,18 +104,26 @@ fun SubtaskScreen(taskId: Long = 0) {
 
     Layout(state = listState, dataList = datalist, header = {
         HeaderTabs(modifier = Modifier.onGloballyPositioned { lc ->
-                                                            val cords = lc.boundsInParent()
+            val cords = lc.boundsInParent()
             floatingActionShowOffset = cords.bottom
         }, tabsData = tabsData, activeTab = activeTab) {
-         activeTab = it
+            activeTab = it
         }
     }) {
-        Subtask(subtask = it)
+        Subtask(subtaskID = it.id!!.toLong())
     }
 
-    AnimatedVisibility(visible = offset + 200 > floatingActionShowOffset + 100, enter = slideInVertically() + fadeIn(), exit = slideOutVertically() + fadeOut()) {
-        ExtendedFloatingActionButton(onClick = { /*TODO*/ },
-            shape = RoundedCornerShape(10.dp), containerColor = Color.White, contentColor = Color.Black) {
+    AnimatedVisibility(
+        visible = offset + 200 > floatingActionShowOffset + 100,
+        enter = slideInVertically() + fadeIn(),
+        exit = slideOutVertically() + fadeOut()
+    ) {
+        ExtendedFloatingActionButton(
+            onClick = { /*TODO*/ },
+            shape = RoundedCornerShape(10.dp),
+            containerColor = Color.White,
+            contentColor = Color.Black
+        ) {
             Row(Modifier.fillMaxWidth()) {
                 Text(text = "Скрыть завершенные задачи")
             }

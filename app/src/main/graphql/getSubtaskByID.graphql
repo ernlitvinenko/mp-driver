@@ -1,0 +1,9 @@
+query GetSubtaskByID($userID: String!, $subtaskID: String!) {
+    subtask(userId: $userID, subtaskId: $subtaskID) {
+        id
+        text
+        startPln
+        endPln
+        status
+    }
+}

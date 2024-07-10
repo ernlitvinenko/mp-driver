@@ -1,0 +1,20 @@
+query GetTaskById($taskID: String!, $userID: String!) {
+    task(userId: $userID, taskId: $taskID) {
+        status
+        route {
+            name
+            temperatureProperty
+            truck {
+                gost
+            }
+            trailer {
+                gost
+            }
+        }
+        text
+        startPln
+        endPln
+        startFact
+        endFact
+    }
+}
