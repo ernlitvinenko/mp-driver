@@ -8,6 +8,9 @@ import androidx.annotation.RequiresApi
 import androidx.core.content.getSystemService
 
 class NotificationApplication: Application() {
+
+//    val db by lazy { AppDatabase.initialize(this) }
+
     @RequiresApi(Build.VERSION_CODES.O)
     override fun onCreate() {
         super.onCreate()

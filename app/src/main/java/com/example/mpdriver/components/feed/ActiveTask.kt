@@ -34,6 +34,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
@@ -44,33 +45,37 @@ import com.apollographql.apollo3.api.ApolloResponse
 import com.example.mpdriver.GetActiveSubtaskIDQuery
 import com.example.mpdriver.GetActiveTaskIdQuery
 import com.example.mpdriver.GetTaskByIdQuery
-import com.example.mpdriver.api.TaskResponse
-import com.example.mpdriver.api.apolloClient
+import com.example.mpdriver.NotificationApplication
+//import com.example.mpdriver.storage.api.TaskResponse
+//import com.example.mpdriver.storage.api.apolloClient
 import com.example.mpdriver.components.ButtonType
 import com.example.mpdriver.components.EmptyList
 import com.example.mpdriver.components.IteractionButton
 import com.example.mpdriver.components.JDEButton
 import com.example.mpdriver.components.Subtask
 import com.example.mpdriver.components.Task
-import com.example.mpdriver.storage.Database
+//import com.example.mpdriver.storage.Database
 import com.example.mpdriver.type.StatusEnumQl
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ActiveTask(activeTaskID: Long? = null, hostController: NavHostController) {
-
+    val context = LocalContext.current
+//    val db = (context.applicationContext as NotificationApplication).db
     var responseGetActiveSubtaskID by remember {
         mutableStateOf<GetActiveSubtaskIDQuery.ActiveSubtask?>(null)
     }
 
-    activeTaskID?.let {
-        LaunchedEffect(Unit) {
-            val sbtDB = Database.subtasks.find { it.status == StatusEnumQl.IN_PROGRESS }
-            sbtDB?.let {
-                responseGetActiveSubtaskID = GetActiveSubtaskIDQuery.ActiveSubtask(sbtDB.id)
-            }
-        }
-    }
+//    activeTaskID?.let {
+//        LaunchedEffect(Unit) {
+//            activeTaskID.let {
+//                responseGetActiveSubtaskID =
+//                    db.taskDao().getActiveSubtaskForTask(activeTaskID)?.let { asbt ->
+//                        GetActiveSubtaskIDQuery.ActiveSubtask(asbt.id.toString())
+//                    }
+//            }
+//        }
+//    }
 
     Column(
         Modifier

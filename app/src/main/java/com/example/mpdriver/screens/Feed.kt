@@ -24,13 +24,10 @@ import androidx.navigation.NavHostController
 import com.apollographql.apollo3.api.ApolloResponse
 import com.example.mpdriver.GetActiveTaskIdQuery
 import com.example.mpdriver.GetTaskByIdQuery
-import com.example.mpdriver.api.TaskApi
-import com.example.mpdriver.api.TaskResponse
-import com.example.mpdriver.api.apolloClient
+import com.example.mpdriver.NotificationApplication
 import com.example.mpdriver.components.Layout
 import com.example.mpdriver.components.feed.ActiveTask
 import com.example.mpdriver.components.feed.FeedTaskDataCard
-import com.example.mpdriver.storage.Database
 import com.example.mpdriver.type.StatusEnumQl
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.format.byUnicodePattern
@@ -54,6 +51,7 @@ fun Feed(modifier: Modifier = Modifier, hostController: NavHostController) {
     var completedTasks by remember {
         mutableStateOf(emptyList<GetActiveTaskIdQuery.CompletedTask>())
     }
+    val context = LocalContext.current
 
 
     val dateFormat = LocalDateTime.Format {
@@ -81,45 +79,32 @@ fun Feed(modifier: Modifier = Modifier, hostController: NavHostController) {
             "buttonLabel" to "Смотреть завершенные задачи",
             "dateDescription" to "Последняя",
         ),
-    )
+
+
+        )
 
     LaunchedEffect(Unit) {
-
-        val tasks = Database.tasks
-
-        val activeTaskDB = tasks.find { it.status == StatusEnumQl.IN_PROGRESS }
-        val completedTasksDB = tasks.filter { it.status == StatusEnumQl.COMPLETED }
-        val plannedTasksDB = tasks.filter { it.status == StatusEnumQl.NOT_DEFINED }
-
-        activeTask = when (activeTaskDB) {
-            null -> null
-            else -> GetActiveTaskIdQuery.Task(id = activeTaskDB.id)
-        }
-        completedTasks = when (completedTasksDB.count()) {
-            0 -> emptyList()
-            else -> completedTasksDB.map {t ->
-               GetActiveTaskIdQuery.CompletedTask(t.id, t.startPln)
-            }
-        }
-
-        plannedTasks = when (plannedTasksDB.count()) {
-            0 -> emptyList()
-            else -> plannedTasksDB.map { t ->
-                GetActiveTaskIdQuery.PlannedTask(t.id, t.startPln)
-            }
-        }
-        Log.d("FEED:PlannedTasks", "${plannedTasks}")
-        Log.d("FEED:ActiveTask", "${activeTask}")
-        Log.d("FEED:CompletedTask", "${completedTasks}")
-
+//        val db = (context.applicationContext as NotificationApplication).db
+//        activeTask = db.taskDao().getActiveTask()?.let {
+//            GetActiveTaskIdQuery.Task(id = it.id.toString())
+//        }
+//
+//        completedTasks = db.taskDao().getCompletedTasks().map {
+//            GetActiveTaskIdQuery.CompletedTask(it.id.toString(), startPln = it.startPln)
+//        }
+//
+//        plannedTasks = db.taskDao().getNotDefinedTasks().map {
+//            GetActiveTaskIdQuery.PlannedTask(it.id.toString(), it.startPln)
+//        }
         isLoading = false
     }
 
-    if(isLoading) {
-        Column (
+    if (isLoading) {
+        Column(
             Modifier
                 .fillMaxWidth()
-                .padding(vertical = 60.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+                .padding(vertical = 60.dp), horizontalAlignment = Alignment.CenterHorizontally
+        ) {
             CircularProgressIndicator(color = Color(0xFFE5332A))
         }
         return

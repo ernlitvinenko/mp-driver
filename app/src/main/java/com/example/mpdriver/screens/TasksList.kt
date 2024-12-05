@@ -32,17 +32,19 @@ import androidx.navigation.NavHostController
 import com.apollographql.apollo3.api.ApolloResponse
 import com.example.mpdriver.GetPlannedTasksIDsQuery
 import com.example.mpdriver.GetTaskByIdQuery
-import com.example.mpdriver.api.TaskApi
-import com.example.mpdriver.api.TaskResponse
-import com.example.mpdriver.api.apolloClient
+import com.example.mpdriver.NotificationApplication
+//import com.example.mpdriver.storage.api.TaskApi
+//import com.example.mpdriver.storage.api.TaskResponse
+//import com.example.mpdriver.storage.api.apolloClient
 import com.example.mpdriver.components.ActiveButton
 import com.example.mpdriver.components.HeaderTabs
 import com.example.mpdriver.components.HeaderTabsData
 import com.example.mpdriver.components.Layout
 import com.example.mpdriver.components.StaleButton
 import com.example.mpdriver.components.Task
-import com.example.mpdriver.storage.CreateUpdateTaskData
-import com.example.mpdriver.storage.Database
+//import com.example.mpdriver.database.models.APP_EVENT
+//import com.example.mpdriver.storage.CreateUpdateTaskData
+//import com.example.mpdriver.storage.Database
 import com.example.mpdriver.type.StatusEnumQl
 import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.launch
@@ -52,7 +54,9 @@ import java.time.LocalDateTime
 
 @Composable
 fun TasksList(modifier: Modifier = Modifier, hostController: NavHostController) {
-    val api = TaskApi(LocalContext.current)
+    val context = LocalContext.current
+//    val db = (context.applicationContext as NotificationApplication).db
+
 
     var isLoading by remember {
         mutableStateOf(true)
@@ -68,27 +72,38 @@ fun TasksList(modifier: Modifier = Modifier, hostController: NavHostController) 
         mutableIntStateOf(0)
     }
 
-    LaunchedEffect(Unit) {
-        val d = Database.tasks.filter { it -> it.status == StatusEnumQl.NOT_DEFINED}
 
-        itemsListResponse = when(d.count())  {
-            0 -> emptyList()
-            else -> d.map {
-                val sbts = it.subtasks.map {sbt ->
-                    GetPlannedTasksIDsQuery.Subtask(sbt.id)
-                }
-                GetPlannedTasksIDsQuery.Task(id = it.id, sbts)
-            }
-        }
+    LaunchedEffect(activeTab) {
+
+
+//        if (activeTab == 0) {
+//            itemsListResponse = db.taskDao().getNotDefinedTasks().map {
+//                GetPlannedTasksIDsQuery.Task(
+//                    id = it.id.toString(),
+//                    subtasks = db.taskDao().getSubtasksForTask(it.id).map { sbt ->
+//                        GetPlannedTasksIDsQuery.Subtask(id = sbt.id.toString())
+//                    })
+//            }
+//        } else {
+//            itemsListResponse = db.taskDao().getCompletedTasks().map {
+//                GetPlannedTasksIDsQuery.Task(
+//                    id = it.id.toString(),
+//                    subtasks = db.taskDao().getSubtasksForTask(it.id).map { sbt ->
+//                        GetPlannedTasksIDsQuery.Subtask(id = sbt.id.toString())
+//                    })
+//            }
+//        }
+
         isLoading = false
     }
 
 
-    if(isLoading) {
-        Column (
+    if (isLoading) {
+        Column(
             Modifier
                 .fillMaxWidth()
-                .padding(vertical = 60.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+                .padding(vertical = 60.dp), horizontalAlignment = Alignment.CenterHorizontally
+        ) {
             CircularProgressIndicator(color = Color(0xFFE5332A))
         }
         return
@@ -107,20 +122,36 @@ fun TasksList(modifier: Modifier = Modifier, hostController: NavHostController) 
             when (activeTab) {
                 0 -> Button(
                     onClick = {
-                              Database.createUpdateTaskDataLocally(
-                                  CreateUpdateTaskData(
-                                      it.id.toLong(),
-                                      Clock.System.now().toEpochMilliseconds(),
-                                      "InProgress"
-                                      )
-                              )
-                                Database.createUpdateTaskDataLocally(
-                                    CreateUpdateTaskData(
-                                        it.subtasks[0].id.toLong(), Clock.System.now().toEpochMilliseconds(), "InProgress",
-                                    )
-                                )
-                            hostController.navigate("feed")
-
+                        val nowTime = Clock.System.now().toEpochMilliseconds()
+//                        val sbt = db.taskDao().getSubtasksForTask(id = it.id.toLong())[0]
+//                        db.eventDao().insert(
+//                            mutableListOf(
+//                                APP_EVENT(
+//                                    recId = it.id.toLong(),
+//                                    vidId = 8678,
+//                                    typeId = 0,
+//                                    dateTime = nowTime.toString(),
+//                                    data = """[{"8794":"8681"}]""",
+//                                    params = "",
+//                                    isOnServer = false,
+//                                    text = "Set status to IN_PROGRESS",
+//                                    id = 0
+//                                ),
+//
+//                                APP_EVENT(
+//                                    recId = sbt.id,
+//                                    vidId = 8678,
+//                                    typeId = 0,
+//                                    dateTime = nowTime.toString(),
+//                                    data = """[{"8794":"8681"}]""",
+//                                    params = "",
+//                                    isOnServer = false,
+//                                    text = "Set status to IN_PROGRESS",
+//                                    id = 0
+//                                )
+//                            ))
+//                                    hostController . navigate ("feed")
+//
                     },
                     colors = ButtonDefaults.buttonColors(
                         contentColor = Color.White,
@@ -129,7 +160,7 @@ fun TasksList(modifier: Modifier = Modifier, hostController: NavHostController) 
                         disabledContainerColor = Color.Gray
                     ),
                     shape = RoundedCornerShape(10.dp),
-//                    enabled = if (Database.tasks.filter { it.status == "InProgress" }.count() >= 1) false else true,
+//                    enabled = db.taskDao().getActiveTask() == null,
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Text(text = "Приступить к выполнению")

@@ -15,7 +15,9 @@ import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -27,22 +29,22 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
-import com.example.mpdriver.api.Auth
-import com.example.mpdriver.storage.Database
+import com.example.mpdriver.viewmodels.AuthViewModel
+//import com.example.mpdriver.storage.api.Auth
+//import com.example.mpdriver.storage.Database
 import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.launch
 
 
 @Composable
-fun PhoneCodeInputScreen(navHostController: NavHostController) {
-    val context = LocalContext.current
+fun PhoneCodeInputScreen(model: AuthViewModel = viewModel()) {
     var errorText by remember {
         mutableStateOf("")
     }
-    var code by remember {
-        mutableStateOf("")
-    }
+    var code = model.phoneCode.observeAsState("")
+
     var isSuccess by remember {
         mutableStateOf(false)
     }
@@ -72,26 +74,13 @@ fun PhoneCodeInputScreen(navHostController: NavHostController) {
         Spacer(modifier = Modifier.height(15.dp))
 
         BasicTextField(
-            value = code,
+            value = code.value,
             onValueChange = {
-                if (it.length > 4) {
-                    code = it.slice(0..3)
-                    return@BasicTextField
-                }
-                code = it
-                if (code.length == 4) {
-                    Auth(context).getToken(phone = Database.phoneNumber!!, code = code) {
-                        MainScope().launch {
-                            it.accessToken?.let {
-                                isSuccess = true
-                                errorText = ""
-                                navHostController.navigate("home")
-                                return@launch
-                            }
-
-                            errorText = "Неверный OTP код."
-                        }
-                    }
+                model.onChangePhoneCode(it)
+                if (code.value.length == 4) {
+//                    TODO Call API Method for auth
+//                    TODO Set access_token in MainViewModel
+//                    TODO set error_text on API Error
                 }
             },
 
@@ -99,10 +88,10 @@ fun PhoneCodeInputScreen(navHostController: NavHostController) {
             decorationBox = {
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center) {
                     repeat(4) { index ->
-                        val isFocused = code.length == index
+                        val isFocused = code.value.length == index
                         val char = when {
-                            index >= code.length -> ""
-                            else -> code[index].toString()
+                            index >= code.value.length -> ""
+                            else -> code.value[index].toString()
                         }
                         Text(
                             modifier = Modifier

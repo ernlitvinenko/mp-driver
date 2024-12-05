@@ -1,0 +1,13 @@
+mutation AddEvent($userID: String!, $IDRec: String!, $text: String!, $data: String!, $tip: Int!, $vid: Int!, $dt: String!) {
+    addEvent(
+        APPEventIdSotr: $userID,
+        APPEventIdRec: $IDRec
+        APPEventText: $text
+        APPEventData: $data
+        APPEventDt: $dt
+        APPEventTip: $tip
+        APPEventVid: $vid
+    ) {
+        IDAppEvent
+    }
+}

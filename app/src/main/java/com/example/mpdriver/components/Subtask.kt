@@ -46,6 +46,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.onFocusEvent
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.AnnotatedString
@@ -67,28 +68,23 @@ import com.apollographql.apollo3.api.ApolloResponse
 import com.apollographql.apollo3.api.toInput
 import com.example.mpdriver.GetSubtaskByIDQuery
 import com.example.mpdriver.GetTaskByIdQuery
+import com.example.mpdriver.NotificationApplication
 import com.example.mpdriver.R
-import com.example.mpdriver.api.Subtasks
-import com.example.mpdriver.api.apolloClient
 import com.example.mpdriver.recievers.TimeTickReciever
-import com.example.mpdriver.storage.CreateUpdateTaskData
-import com.example.mpdriver.storage.Database
 import com.example.mpdriver.type.StatusEnumQl
-import kotlinx.coroutines.MainScope
-import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
 import kotlinx.datetime.Clock
 import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.UtcOffset
 import kotlinx.datetime.asTimeZone
+import kotlinx.datetime.format
 import kotlinx.datetime.format.byUnicodePattern
 import kotlinx.datetime.format.char
 import kotlinx.datetime.toInstant
 import kotlinx.datetime.toLocalDateTime
 import kotlinx.datetime.until
+import java.time.ZoneOffset
 import kotlin.math.abs
 
 @Preview(showBackground = true)
@@ -116,20 +112,7 @@ fun Subtask(
     }
 
     LaunchedEffect(Unit) {
-
-        val sbtDB = Database.subtasks.find { it.id == subtaskID.toString() }
-
-        sbtDB?.let {
-            subtaskResponse = GetSubtaskByIDQuery.Subtask(
-                sbtDB.id,
-                sbtDB.text,
-                startPln = sbtDB.startPln,
-                endPln = sbtDB.endPln,
-                status = sbtDB.status
-            )
-
-        }
-//         subtaskResponse = apolloClient.query(GetSubtaskByIDQuery("1125904232173609", subtaskID.toString())).execute()
+//         subtaskResponse = apolloClient.query(GetSubtaskByIDQuery("1125904232173609", subtaskID.toString())).execute().data?.subtask
     }
 
     TimeTickReciever.registerHandler {
@@ -311,11 +294,16 @@ fun Subtask(
 
 }
 
+enum class SheetState{
+    HIDE,
+    OPEN,
+    FULL_SCREEN
+}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun IsSubtaskCompletedAction(
-    setStateAction: (Boolean) -> Unit = { },
+    setStateAction: () -> Unit = { },
     subtask: GetSubtaskByIDQuery.Subtask
 ) {
     var currentStep by remember {
@@ -326,16 +314,18 @@ fun IsSubtaskCompletedAction(
     }
 
     val actionController = rememberNavController()
-    var isFullScreen by remember {
-        mutableStateOf(false)
-    }
     val sheetState = rememberModalBottomSheetState(
-        skipPartiallyExpanded = false,
+//        skipPartiallyExpanded = false,
     )
+    var sheetStateCurrent by remember {
+        mutableStateOf(SheetState.OPEN)
+    }
+
+
 
     ModalBottomSheet(
         onDismissRequest = {
-            setStateAction(false)
+            setStateAction()
         },
 
         containerColor = Color.White,
@@ -365,19 +355,18 @@ fun IsSubtaskCompletedAction(
                         InitialStep(subtask = subtask, controller = actionController)
                     }
                     composable("success") {
-                        SuccessStep(subtask = subtask, controller = actionController)
                         title = "Когда вы выполнили подзадачу?"
-                        isFullScreen = true
-                        LaunchedEffect(sheetState) {
-                            sheetState.expand()
+                        if (sheetStateCurrent == SheetState.OPEN) {
+                            sheetStateCurrent = SheetState.FULL_SCREEN
                         }
+                        SuccessStep(subtask = subtask, controller = actionController, cb = {
+                            sheetStateCurrent = SheetState.HIDE
+                        })
                     }
                     composable("failure") {
-                        isFullScreen = true
-                        LaunchedEffect(sheetState) {
-                            sheetState.expand()
+                        if (sheetStateCurrent == SheetState.OPEN) {
+                            sheetStateCurrent = SheetState.FULL_SCREEN
                         }
-
                         title = "Что помешало выполнить подзадачу?"
                         FailureStep(subtask = subtask, controller = actionController)
                     }
@@ -387,6 +376,17 @@ fun IsSubtaskCompletedAction(
 
         }
 
+    }
+
+    LaunchedEffect(sheetStateCurrent) {
+        when(sheetStateCurrent) {
+            SheetState.OPEN -> sheetState.show()
+            SheetState.HIDE -> {
+                setStateAction()
+                sheetState.hide()
+            }
+            SheetState.FULL_SCREEN -> sheetState.expand()
+        }
     }
 }
 
@@ -410,16 +410,36 @@ fun InitialStep(subtask: GetSubtaskByIDQuery.Subtask, controller: NavHostControl
 @Composable
 fun SuccessStep(
     subtask: GetSubtaskByIDQuery.Subtask,
-    controller: NavHostController = rememberNavController()
+    controller: NavHostController = rememberNavController(), cb: () -> Unit = {}
 ) {
 
+    val now = Clock.System.now()
+    val ctx = LocalContext.current
+//    val db = (ctx.applicationContext as NotificationApplication).db
+    val timeFormat = LocalDateTime.Format {
+        hour()
+        minute()
+    }
+    val dateFormat = LocalDateTime.Format {
+        dayOfMonth()
+        monthNumber()
+        year()
+    }
+
+
     var date by remember {
-        mutableStateOf("")
+        mutableStateOf(
+            now.toLocalDateTime(timeZone = TimeZone.currentSystemDefault()).format(dateFormat)
+        )
     }
 
     var time by remember {
-        mutableStateOf("")
+        mutableStateOf(
+            now.toLocalDateTime(timeZone = TimeZone.currentSystemDefault()).format(timeFormat)
+        )
     }
+
+
 
     Column {
         Column(
@@ -470,11 +490,8 @@ fun SuccessStep(
 
         Spacer(modifier = Modifier.height(20.dp))
         ActiveButton(onClick = {
-            val task = Database.tasks.find {
-                it.subtasks.find { sbt ->
-                    sbt.id == subtask.id
-                } != null
-            }
+
+//            val task = db.taskDao().getTaskForSbt(sbtID = subtask.id.toLong())
 
             val dt = LocalDateTime.parse(date + "T" + time, LocalDateTime.Format {
                 dayOfMonth()
@@ -483,40 +500,55 @@ fun SuccessStep(
                 char('T')
                 hour()
                 minute()
-            }).toInstant(TimeZone.UTC).toEpochMilliseconds()
+            }).toInstant(TimeZone.currentSystemDefault()).toEpochMilliseconds()
 
-            task?.let {
-                Database.createUpdateTaskDataLocally(
-                    CreateUpdateTaskData(
-                        subtask.id.toLong(),
-                        dt = dt,
-                        status = "Completed"
-                    )
-                )
+//            task?.let {
+//                val sbts = db.taskDao().getSubtasksForTask(id = task!!.id)
+//                var secondEvent: APP_EVENT
 
-                if (subtask.id == task.subtasks.last().id) {
-                    Database.createUpdateTaskDataLocally(
-                        CreateUpdateTaskData(
-                            task.id.toLong(),
-                            dt = dt,
-                            status = "Completed"
-                        )
-                    )
-                    return@let
-                }
-                val curr_sbt_idx = task.subtasks.indexOf(task.subtasks.find { it.id == subtask.id })
+//                if (sbts.last().id == subtask.id.toLong()) {
+//                    secondEvent = APP_EVENT(
+//                        id = 0,
+//                        recId = task.id,
+//                        vidId = 8678,
+//                        typeId = 0,
+//                        dateTime = dt.toString(),
+//                        data = """[{"8794":"8682"}]""",
+//                        params = "",
+//                        text = "Set status to Completed"
+//                    )
+//                } else {
+//
+//                    secondEvent = APP_EVENT(
+//                        id = 0,
+//                        recId = sbts.find { elem -> elem.id == subtask.id.toLong() + 1 }!!.id,
+//                        vidId = 8678,
+//                        typeId = 0,
+//                        dateTime = dt.toString(),
+//                        data = """[{"8794":"8681"}]""",
+//                        params = "",
+//                        text = "Set status to InProgress"
+//                    )
+//                }
+//                db.eventDao().insert(
+//                    mutableListOf(
+//                        APP_EVENT(
+//                            id = 0,
+//                            recId = subtask.id.toLong(),
+//                            vidId = 8678,
+//                            typeId = 0,
+//                            dateTime = dt.toString(),
+//                            data = """[{"8794":"8682"}]""",
+//                            params = "",
+//                            text = "Set status to Completed"
+//                        ),
+//                        secondEvent
+//                    )
+//                )
 
-                Database.createUpdateTaskDataLocally(
-                    CreateUpdateTaskData(
-                        task.subtasks[curr_sbt_idx + 1].id.toLong(),
-                        dt,
-                        status = "InProgress"
-                    )
-                )
+//            }
 
-            }
-
-
+//            cb()
         }, text = "Сохранить", modifier = Modifier.fillMaxWidth())
     }
 

@@ -55,4 +55,41 @@ query fetchApplicationData ($userID: String!) {
         tip
         text
     }
+
+    db {
+        appEvent(userId: $userID) {
+            IDAppEvent
+            APPEventIdRec
+            APPEventVid
+            APPEventTip
+            APPEventDt
+            APPEventData
+            APPEventParam
+            APPEventText
+        }
+        param(userId: $userID) {
+            APPParamIdRec
+            marsh {
+                IDMarsh
+                MARSHName
+                MARSHPrTepl
+                pric {
+                    IDTrs
+                    TRSSidGost
+                }
+                auto {
+                    IDTrs
+                    TRSSidGost
+                }
+            }
+            mst {
+                IDMst
+                MSTName
+                MSTShir
+                MSTDolg
+            }
+        }
+
+
+    }
 }

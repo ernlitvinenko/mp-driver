@@ -1,5 +1,6 @@
 package com.example.mpdriver.screens
 
+import android.util.Log
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -14,6 +15,7 @@ import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -31,22 +33,28 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.navigation.NavHostController
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.mpdriver.NotificationService
-import com.example.mpdriver.api.Auth
+import com.example.mpdriver.errors.AuthErrors
+import com.example.mpdriver.viewmodels.AuthViewModel
 import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.launch
 
 
 @Composable
-fun PhoneInputScreen(navHostController: NavHostController) {
+fun PhoneInputScreen(navigateTo: () -> Unit = {}, viewmodel: AuthViewModel = viewModel()) {
     val context = LocalContext.current
+    val service = NotificationService(context)
+    val phone = viewmodel.phoneNumber.observeAsState("")
+
     var errorText by remember {
         mutableStateOf("")
     }
-    var phone by remember {
-        mutableStateOf("")
+
+    fun setErrorMessage(error: AuthErrors) {
+        errorText = error.displayText
     }
+
 
     Column(
         Modifier
@@ -72,10 +80,16 @@ fun PhoneInputScreen(navHostController: NavHostController) {
         )
         Spacer(modifier = Modifier.height(15.dp))
         TextField(
+            value = phone.value,
             isError = errorText != "",
             modifier = Modifier.fillMaxWidth(),
-            value = phone, onValueChange = { phone = it.filter { it.isDigit() } },
+            onValueChange = {
+                viewmodel.onChangePhoneNumber(
+                    it.filter { char -> char.isDigit() })
+            },
+
             placeholder = { Text(text = "+7 (999) 999-99-99") },
+
             colors = TextFieldDefaults.colors(
                 unfocusedContainerColor = Color(0xFFF2F2F2),
                 focusedContainerColor = Color(0xFFE2E2E2),
@@ -83,50 +97,25 @@ fun PhoneInputScreen(navHostController: NavHostController) {
                 errorContainerColor = Color(0xFFE2E2E2),
                 errorTextColor = Color(0xFFE5332A)
             ),
-            visualTransformation = VisualTransformation { text ->
-                TransformedText(
-                    AnnotatedString(
-                        phoneChecking(text.text)
-                    ), object : OffsetMapping {
-                        override fun originalToTransformed(offset: Int): Int {
-                            when (offset) {
-                                1 -> return offset + 1
-                                in 2..4 -> return offset + 3
-                                in 5..7 -> return offset + 5
-                                in 8..9 -> return offset + 6
-                                in 10..11 -> return offset + 7
-                                else -> return offset
-                            }
-                        }
-
-                        override fun transformedToOriginal(offset: Int): Int {
-                            return offset
-                        }
-
-                    }
-                )
-            },
+            visualTransformation = PhoneNumberVisualTransformation(),
             keyboardOptions = KeyboardOptions(
                 keyboardType = KeyboardType.Phone,
                 autoCorrect = false,
                 imeAction = ImeAction.Go
             ),
             keyboardActions = KeyboardActions(onGo = {
-                Auth(context).getPhoneCode(phone.filter { it.isDigit() }) {
 
-                    it.code?.let {
-                        NotificationService(context).showNotificationAuthCode(it.toString())
-
-                        MainScope().launch {
-                            navHostController.navigate("auth/code")
-                        }
-
-                    }
-
-                    it.error?.let { error ->
-                        errorText = it.langs!!.ru!!
-                    }
-
+                MainScope().launch {
+                    proceedCode(
+                        handleOk = {
+                            navigateTo()
+                        },
+                        setErrorMessage = { error ->
+                            setErrorMessage(error)
+                        },
+                        viewmodel = viewmodel,
+                        notificationService = service
+                    )
 
                 }
             })
@@ -135,27 +124,73 @@ fun PhoneInputScreen(navHostController: NavHostController) {
     }
 }
 
-fun phoneChecking(text: String): String {
-    val digitText = text.filter { char -> char.isDigit() }
-
-
-    when (digitText.length) {
-        1 -> return "+7"
-        in 2..4 -> return "+7 (${digitText.slice(1..<digitText.length)}"
-        in 5..7 -> return "+7 (${digitText.slice(1..3)}) ${digitText.slice(4..<digitText.length)}"
-        in 8..9 -> return "+7 (${digitText.slice(1..3)}) ${digitText.slice(4..6)}-${
-            digitText.slice(
-                7..<digitText.length
-            )
-        }"
-
-        in 10..11 -> return "+7 (${digitText.slice(1..3)}) ${digitText.slice(4..6)}-${
-            digitText.slice(
-                7..8
-            )
-        }-${digitText.slice(9..<digitText.length)}"
+fun formatPhoneNumber(digits: String): String {
+    val sb = StringBuilder()
+    for (i in digits.indices) {
+        when (i) {
+            0 -> sb.append("+")
+            1 -> sb.append(" (")
+            4 -> sb.append(") ")
+            7 -> sb.append("-")
+            9 -> sb.append("-")
+        }
+        sb.append(digits[i])
     }
+    return sb.toString()
+}
 
 
-    return ""
+class PhoneNumberVisualTransformation : VisualTransformation {
+    override fun filter(text: AnnotatedString): TransformedText {
+        val formattedText = formatPhoneNumber(text.text.filter { it.isDigit() })
+        val offsetMapping = object : OffsetMapping {
+            override fun originalToTransformed(offset: Int): Int {
+                // Account for added formatting characters
+                var transformedOffset = offset
+                if (offset >= 1) transformedOffset += 1 // "+"
+                if (offset >= 2) transformedOffset += 2 // " ("
+                if (offset >= 5) transformedOffset += 2 // ") "
+                if (offset >= 8) transformedOffset += 1 // "-"
+                if (offset >= 10) transformedOffset += 1 // "-"
+                return transformedOffset
+            }
+
+            override fun transformedToOriginal(offset: Int): Int {
+                // Remove formatting characters to map back
+                var originalOffset = offset
+                if (offset > 15) originalOffset -= 5
+                else if (offset > 12) originalOffset -= 4
+                else if (offset > 9) originalOffset -= 3
+                else if (offset > 6) originalOffset -= 2
+                else if (offset > 3) originalOffset -= 1
+                else if (offset > 1) originalOffset -= 2
+                return originalOffset
+            }
+        }
+        return TransformedText(AnnotatedString(formattedText), offsetMapping)
+    }
+}
+
+
+suspend fun proceedCode(handleOk: () -> Unit, setErrorMessage: (error: AuthErrors) -> Unit, viewmodel: AuthViewModel, notificationService: NotificationService) {
+    val data = viewmodel.getCode()
+
+    data?.let {
+        when (it.status) {
+            0 -> {
+                Log.d("sms_code", "${it.code}")
+                notificationService.showNotificationAuthCode(it.code.toString())
+                handleOk()
+            }
+            2 -> {
+                setErrorMessage(AuthErrors.InvalidPhoneNumber)
+            }
+            5 -> {
+                setErrorMessage(AuthErrors.NoProfileFounded)
+            }
+            else -> {
+                setErrorMessage(AuthErrors.ServerError)
+            }
+        }
+    }
 }

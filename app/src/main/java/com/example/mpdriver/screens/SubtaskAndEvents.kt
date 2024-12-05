@@ -42,14 +42,14 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
 import com.example.mpdriver.FetchApplicationDataQuery
-import com.example.mpdriver.api.Subtasks
-import com.example.mpdriver.api.TaskApi
+//import com.example.mpdriver.storage.api.Subtasks
+//import com.example.mpdriver.storage.api.TaskApi
 import com.example.mpdriver.components.ComposableLifecycle
 import com.example.mpdriver.components.HeaderTabs
 import com.example.mpdriver.components.HeaderTabsData
 import com.example.mpdriver.components.Layout
 import com.example.mpdriver.components.Subtask
-import com.example.mpdriver.storage.Database
+//import com.example.mpdriver.storage.Database
 import kotlinx.datetime.LocalDateTime
 
 
@@ -57,7 +57,7 @@ import kotlinx.datetime.LocalDateTime
 @Composable
 fun SubtaskScreen(taskId: Long = 0) {
 
-    var api = TaskApi(LocalContext.current)
+//    var api = TaskApi()
 
     var isLoading by remember {
         mutableStateOf(true)
@@ -83,10 +83,10 @@ fun SubtaskScreen(taskId: Long = 0) {
         listOf<HeaderTabsData>(HeaderTabsData(0, "Подзадачи"), HeaderTabsData(1, "События"))
 
     LaunchedEffect(Unit) {
-        val task = Database.tasks.find { it.id == taskId.toString() }
-        datalist = Database.subtasks.filter { sbt ->
-            task!!.subtasks.find { it.id == sbt.id } != null
-        }.sortedBy { LocalDateTime.parse(it.startPln.toString()) }
+//        val task = Database.tasks.find { it.id == taskId.toString() }
+//        datalist = Database.subtasks.filter { sbt ->
+//            task!!.subtasks.find { it.id == sbt.id } != null
+//        }.sortedBy { LocalDateTime.parse(it.startPln.toString()) }
         isLoading = false
     }
 
