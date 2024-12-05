@@ -17,6 +17,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.mpdriver.variables.JDEColor
 
 
 @Preview(showBackground = true)
@@ -29,7 +30,7 @@ fun InformationPlaceholderBig(
     Column(
         modifier = modifier
             .clip(RoundedCornerShape(10.dp))
-            .background(Color(0xFFEEEEEE))
+            .background(JDEColor.BG_GRAY.color)
             .padding(vertical = 12.dp)
             .clip(RoundedCornerShape(10.dp)),
         horizontalAlignment = androidx.compose.ui.Alignment.CenterHorizontally
@@ -60,7 +61,7 @@ fun InformationPlaceholderSmall(
     Row(
         modifier = modifier
             .clip(RoundedCornerShape(10.dp))
-            .background(Color(0xFFEEEEEE))
+            .background(JDEColor.BG_GRAY.color)
             .padding(vertical = 12.dp, horizontal = 10.dp)
             .clip(RoundedCornerShape(10.dp)),
         horizontalArrangement = Arrangement.Absolute.SpaceBetween,

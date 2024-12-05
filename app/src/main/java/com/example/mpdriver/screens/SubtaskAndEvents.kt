@@ -49,6 +49,7 @@ import com.example.mpdriver.components.HeaderTabs
 import com.example.mpdriver.components.HeaderTabsData
 import com.example.mpdriver.components.Layout
 import com.example.mpdriver.components.Subtask
+import com.example.mpdriver.variables.JDEColor
 //import com.example.mpdriver.storage.Database
 import kotlinx.datetime.LocalDateTime
 
@@ -97,7 +98,7 @@ fun SubtaskScreen(taskId: Long = 0) {
                 .fillMaxWidth()
                 .padding(vertical = 60.dp), horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            CircularProgressIndicator(color = Color(0xFFE5332A))
+            CircularProgressIndicator(color = JDEColor.PRIMARY.color)
         }
         return
     }

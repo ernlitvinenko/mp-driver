@@ -141,7 +141,7 @@ fun Navigator(model: AuthViewModel = viewModel()) {
 //                    .fillMaxWidth()
 //                    .padding(horizontal = 16.dp), horizontalAlignment = Alignment.CenterHorizontally
 //            ) {
-//                CircularProgressIndicator(color = Color(0xFFE5332A))
+//                CircularProgressIndicator(color = JDEColor.PRIMARY.color)
 //                Text(
 //                    text = "Выполняется обновление даннных, Пожалуйста, подождите.",
 //                    fontSize = 16.sp,

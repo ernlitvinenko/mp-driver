@@ -29,6 +29,7 @@ import com.example.mpdriver.components.Layout
 import com.example.mpdriver.components.feed.ActiveTask
 import com.example.mpdriver.components.feed.FeedTaskDataCard
 import com.example.mpdriver.type.StatusEnumQl
+import com.example.mpdriver.variables.JDEColor
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.format.byUnicodePattern
 
@@ -105,7 +106,7 @@ fun Feed(modifier: Modifier = Modifier, hostController: NavHostController) {
                 .fillMaxWidth()
                 .padding(vertical = 60.dp), horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            CircularProgressIndicator(color = Color(0xFFE5332A))
+            CircularProgressIndicator(color = JDEColor.PRIMARY.color)
         }
         return
     }

@@ -36,6 +36,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.mpdriver.NotificationService
 import com.example.mpdriver.errors.AuthErrors
+import com.example.mpdriver.variables.JDEColor
 import com.example.mpdriver.viewmodels.AuthViewModel
 import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.launch
@@ -91,11 +92,11 @@ fun PhoneInputScreen(navigateTo: () -> Unit = {}, viewmodel: AuthViewModel = vie
             placeholder = { Text(text = "+7 (999) 999-99-99") },
 
             colors = TextFieldDefaults.colors(
-                unfocusedContainerColor = Color(0xFFF2F2F2),
-                focusedContainerColor = Color(0xFFE2E2E2),
-                focusedIndicatorColor = Color(0xFFE5332A),
-                errorContainerColor = Color(0xFFE2E2E2),
-                errorTextColor = Color(0xFFE5332A)
+                unfocusedContainerColor = JDEColor.TEXT_FIELD_BG_COLOR.color,
+                focusedContainerColor = JDEColor.TEXT_FOCUSED_FIELD_COLOR.color,
+                focusedIndicatorColor = JDEColor.PRIMARY.color,
+                errorContainerColor = JDEColor.TEXT_FOCUSED_FIELD_COLOR.color,
+                errorTextColor = JDEColor.PRIMARY.color
             ),
             visualTransformation = PhoneNumberVisualTransformation(),
             keyboardOptions = KeyboardOptions(
@@ -120,7 +121,7 @@ fun PhoneInputScreen(navigateTo: () -> Unit = {}, viewmodel: AuthViewModel = vie
                 }
             })
         )
-        Text(text = errorText, color = Color(0xFFE5332A), fontWeight = FontWeight.Bold)
+        Text(text = errorText, color = JDEColor.PRIMARY.color, fontWeight = FontWeight.Bold)
     }
 }
 

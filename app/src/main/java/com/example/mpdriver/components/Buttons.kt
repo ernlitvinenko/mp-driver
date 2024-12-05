@@ -16,6 +16,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.example.mpdriver.variables.JDEColor
 
 
 enum class ButtonType {
@@ -43,7 +44,7 @@ fun StaleButton(onClick: () -> Unit, modifier: Modifier = Modifier, text: String
         modifier = modifier,
         onClick = onClick,
         colors = ButtonDefaults.buttonColors(
-            containerColor = Color(0xFFF2F2F2),
+            containerColor = JDEColor.TEXT_FIELD_BG_COLOR.color,
             contentColor = Color.Black
         ),
         shape = RoundedCornerShape(10.dp)
@@ -76,9 +77,9 @@ fun JDEButton(modifier: Modifier = Modifier,
             .fillMaxWidth()
             .border(2.dp,
                 when(type) {
-                    ButtonType.DANGER -> Color(0xFFE5332A)
-                    ButtonType.WARNING -> Color(0xFFFFC700)
-                    ButtonType.SUCCESS -> Color(0xFF45900B)
+                    ButtonType.DANGER -> JDEColor.PRIMARY.color
+                    ButtonType.WARNING -> JDEColor.WARNING.color
+                    ButtonType.SUCCESS -> JDEColor.SUCCESS.color
                     ButtonType.DEFAULT -> Color.Gray
                 },
                 RoundedCornerShape(10.dp))

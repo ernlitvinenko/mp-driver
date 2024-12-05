@@ -46,6 +46,7 @@ import com.example.mpdriver.components.Task
 //import com.example.mpdriver.storage.CreateUpdateTaskData
 //import com.example.mpdriver.storage.Database
 import com.example.mpdriver.type.StatusEnumQl
+import com.example.mpdriver.variables.JDEColor
 import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.launch
 import kotlinx.datetime.Clock
@@ -104,7 +105,7 @@ fun TasksList(modifier: Modifier = Modifier, hostController: NavHostController) 
                 .fillMaxWidth()
                 .padding(vertical = 60.dp), horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            CircularProgressIndicator(color = Color(0xFFE5332A))
+            CircularProgressIndicator(color = JDEColor.PRIMARY.color)
         }
         return
     }

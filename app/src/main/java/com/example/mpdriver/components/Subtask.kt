@@ -72,6 +72,7 @@ import com.example.mpdriver.NotificationApplication
 import com.example.mpdriver.R
 import com.example.mpdriver.recievers.TimeTickReciever
 import com.example.mpdriver.type.StatusEnumQl
+import com.example.mpdriver.variables.JDEColor
 import kotlinx.datetime.Clock
 import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.LocalDateTime
@@ -164,9 +165,9 @@ fun Subtask(
                 .border(
                     2.dp, when (status) {
                         TaskStatus.DEFAULT -> Color.Gray
-                        TaskStatus.SUCCESS -> Color(0xFF45900B)
-                        TaskStatus.DANGER -> Color(0xFFE5332A)
-                        TaskStatus.WARNING -> Color(0xFFFFC700)
+                        TaskStatus.SUCCESS -> JDEColor.SUCCESS.color
+                        TaskStatus.DANGER -> JDEColor.PRIMARY.color
+                        TaskStatus.WARNING -> JDEColor.WARNING.color
                     }, RoundedCornerShape(10.dp)
                 )
                 .fillMaxWidth()
@@ -218,7 +219,7 @@ fun Subtask(
                 text = if (isDelay) "Задержка" else "Осталось времени:",
                 fontWeight = FontWeight.Bold,
                 fontSize = if (isDelay) 20.sp else 14.sp,
-                color = if (isDelay) Color(0xFFE5332A) else Color.Black
+                color = if (isDelay) JDEColor.PRIMARY.color else Color.Black
             )
             Row(Modifier.padding(bottom = 20.dp)) {
                 InformationPlaceholderSmall(
@@ -226,7 +227,7 @@ fun Subtask(
                         .weight(1f)
                         .border(
                             1.dp,
-                            color = if (isDelay) Color(0xFFE5332A) else Color.Gray,
+                            color = if (isDelay) JDEColor.PRIMARY.color else Color.Gray,
                             shape = RoundedCornerShape(10.dp)
                         ),
                     mainText = leastDays.toString(),
@@ -238,7 +239,7 @@ fun Subtask(
                         .weight(1f)
                         .border(
                             1.dp,
-                            color = if (isDelay) Color(0xFFE5332A) else Color.Gray,
+                            color = if (isDelay) JDEColor.PRIMARY.color else Color.Gray,
                             shape = RoundedCornerShape(10.dp)
                         ),
                     mainText = leastHours.toString(),
@@ -251,7 +252,7 @@ fun Subtask(
                         .weight(1f)
                         .border(
                             1.dp,
-                            color = if (isDelay) Color(0xFFE5332A) else Color.Gray,
+                            color = if (isDelay) JDEColor.PRIMARY.color else Color.Gray,
                             shape = RoundedCornerShape(10.dp)
                         ),
                     mainText = leastMinutes.toString(),
@@ -601,8 +602,8 @@ fun FailureStep(
             modifier = Modifier.fillMaxWidth(),
             placeholder = { Text(text = "Введите текст") },
             colors = TextFieldDefaults.colors(
-                unfocusedContainerColor = Color(0xFFF2F2F2),
-                focusedContainerColor = Color(0xFFF2F2F2),
+                unfocusedContainerColor = JDEColor.TEXT_FIELD_BG_COLOR.color,
+                focusedContainerColor = JDEColor.TEXT_FIELD_BG_COLOR.color,
                 focusedIndicatorColor = Color.Transparent,
                 unfocusedIndicatorColor = Color.Transparent
             )
@@ -616,8 +617,8 @@ fun FailureStep(
             modifier = Modifier.fillMaxWidth(),
             placeholder = { Text(text = "Дата") },
             colors = TextFieldDefaults.colors(
-                unfocusedContainerColor = Color(0xFFF2F2F2),
-                focusedContainerColor = Color(0xFFF2F2F2),
+                unfocusedContainerColor = JDEColor.TEXT_FIELD_BG_COLOR.color,
+                focusedContainerColor = JDEColor.TEXT_FIELD_BG_COLOR.color,
                 focusedIndicatorColor = Color.Transparent,
                 unfocusedIndicatorColor = Color.Transparent
             ),
@@ -637,8 +638,8 @@ fun FailureStep(
             modifier = Modifier.fillMaxWidth(),
             placeholder = { Text(text = "Дата") },
             colors = TextFieldDefaults.colors(
-                unfocusedContainerColor = Color(0xFFF2F2F2),
-                focusedContainerColor = Color(0xFFF2F2F2),
+                unfocusedContainerColor = JDEColor.TEXT_FIELD_BG_COLOR.color,
+                focusedContainerColor = JDEColor.TEXT_FIELD_BG_COLOR.color,
                 focusedIndicatorColor = Color.Transparent,
                 unfocusedIndicatorColor = Color.Transparent
             ),
@@ -690,7 +691,7 @@ fun TextInput(
                 Modifier
                     .height(50.dp)
                     .clip(RoundedCornerShape(10.dp))
-                    .background(Color(0xFFF2F2F2))
+                    .background(JDEColor.TEXT_FIELD_BG_COLOR.color)
                     .padding(horizontal = 10.dp, vertical = 5.dp)
             ) {
                 Text(

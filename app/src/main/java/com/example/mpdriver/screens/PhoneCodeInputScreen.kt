@@ -31,6 +31,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
+import com.example.mpdriver.variables.JDEColor
 import com.example.mpdriver.viewmodels.AuthViewModel
 //import com.example.mpdriver.storage.api.Auth
 //import com.example.mpdriver.storage.Database
@@ -100,8 +101,8 @@ fun PhoneCodeInputScreen(model: AuthViewModel = viewModel()) {
                                 .border(
                                     if (isFocused) 3.dp else 1.dp,
                                     color = when {
-                                        isSuccess -> Color(0xFF45900B)
-                                        errorText != "" -> Color.Red
+                                        isSuccess -> JDEColor.SUCCESS.color
+                                        errorText != "" -> JDEColor.PRIMARY.color
                                         else -> Color.Gray
                                     },
                                     RoundedCornerShape(10.dp)
@@ -116,6 +117,6 @@ fun PhoneCodeInputScreen(model: AuthViewModel = viewModel()) {
                 }
             })
         Spacer(modifier = Modifier.padding(bottom = 10.dp))
-        Text(text = errorText, color = Color(0xFFE5332A), fontWeight = FontWeight.Bold)
+        Text(text = errorText, color = JDEColor.PRIMARY.color, fontWeight = FontWeight.Bold)
     }
 }
