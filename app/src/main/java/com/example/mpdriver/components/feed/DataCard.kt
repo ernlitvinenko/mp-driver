@@ -32,8 +32,7 @@ fun FeedTaskDataCard(
     date: String = "30.11.2023",
     dateDescription: String = "Ближайшая",
     buttonLabel: String = "Смотреть запланированные задачи",
-    hostController: NavHostController,
-    link: String
+    navigateTo: () -> Unit
 ) {
     Column(modifier = modifier.fillMaxWidth()) {
         Text(
@@ -57,7 +56,7 @@ fun FeedTaskDataCard(
         }
         Spacer(modifier = Modifier.height(15.dp))
         Button(
-            onClick = { hostController.navigate(link) },
+            onClick = { navigateTo() },
             colors = ButtonDefaults.buttonColors(
                 contentColor = Color.White,
                 containerColor = Color.Black

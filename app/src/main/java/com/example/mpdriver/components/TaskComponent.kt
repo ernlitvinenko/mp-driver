@@ -40,6 +40,7 @@ import com.example.mpdriver.recievers.TimeTickReciever
 import com.example.mpdriver.type.MarshTemperaturePropertyQL
 import com.example.mpdriver.type.StatusEnumQl
 import com.example.mpdriver.variables.JDEColor
+import com.example.mpdriver.variables.datetimeFormatFrom
 import kotlinx.datetime.Clock
 import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.LocalDateTime
@@ -94,20 +95,6 @@ fun TaskComponent(
 
     val timeFormat = LocalDateTime.Format {
         byUnicodePattern("HH:mm")
-    }
-
-    val datetimeFormatFrom = LocalDateTime.Format {
-        dayOfMonth()
-        char('.')
-        monthNumber()
-        char('.')
-        year()
-        char(' ')
-        hour(padding = Padding.NONE)
-        char(':')
-        minute()
-        char(':')
-        second()
     }
 
 

@@ -53,67 +53,54 @@ import com.example.mpdriver.components.EmptyList
 import com.example.mpdriver.components.IteractionButton
 import com.example.mpdriver.components.JDEButton
 import com.example.mpdriver.components.Subtask
+import com.example.mpdriver.components.TaskComponent
+import com.example.mpdriver.data.models.AppTask
 //import com.example.mpdriver.storage.Database
 import com.example.mpdriver.type.StatusEnumQl
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ActiveTask(activeTaskID: Long? = null, hostController: NavHostController) {
-    val context = LocalContext.current
-//    val db = (context.applicationContext as NotificationApplication).db
-    var responseGetActiveSubtaskID by remember {
-        mutableStateOf<GetActiveSubtaskIDQuery.ActiveSubtask?>(null)
-    }
-
-//    activeTaskID?.let {
-//        LaunchedEffect(Unit) {
-//            activeTaskID.let {
-//                responseGetActiveSubtaskID =
-//                    db.taskDao().getActiveSubtaskForTask(activeTaskID)?.let { asbt ->
-//                        GetActiveSubtaskIDQuery.ActiveSubtask(asbt.id.toString())
-//                    }
-//            }
-//        }
-//    }
+fun ActiveTask(activeTask: AppTask? = null) {
 
     Column(
         Modifier
             .fillMaxWidth()
             .padding(vertical = 15.dp)
     ) {
-        if (activeTaskID == null) {
+
+        if (activeTask == null) {
             EmptyList(Modifier.padding(vertical = 60.dp), text = "У вас нет активных задач")
             return
         }
         Text(
             text = "Активная задача",
-            fontWeight = androidx.compose.ui.text.font.FontWeight.Bold,
+            fontWeight = FontWeight.Bold,
             fontSize = 18.sp
         )
 
-        activeTaskID.let {
-            IteractionButton(onClick = { hostController.navigate("tasks/${activeTaskID}") }) {
-//                Task(task_id = activeTaskID)
-            }
+    //            TODO wrap it into itteraction button
+        TaskComponent(taskData = activeTask)
+
+    //            IteractionButton(onClick = { hostController.navigate("tasks/${activeTaskID}") }) {
+    //            }
         }
 
         Spacer(modifier = Modifier.height(10.dp))
         Text(
             text = "Активная подзадача",
-            fontWeight = androidx.compose.ui.text.font.FontWeight.Bold,
+            fontWeight = FontWeight.Bold,
             fontSize = 18.sp
         )
         Spacer(modifier = Modifier.height(10.dp))
 
 
-        responseGetActiveSubtaskID.let { task ->
-            IteractionButton(onClick = { /*TODO*/ }) {
-                responseGetActiveSubtaskID?.let {
-                    Subtask(subtaskID = it.id.toLong())
-                }
-            }
-        }
+//        responseGetActiveSubtaskID.let { task ->
+//            IteractionButton(onClick = { /*TODO*/ }) {
+//                responseGetActiveSubtaskID?.let {
+//                    Subtask(subtaskID = it.id.toLong())
+//                }
+//            }
+//        }
     }
-}
 
 

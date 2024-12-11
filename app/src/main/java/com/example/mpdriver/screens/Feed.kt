@@ -12,6 +12,7 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -20,6 +21,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import com.apollographql.apollo3.api.ApolloResponse
 import com.example.mpdriver.GetActiveTaskIdQuery
@@ -28,31 +30,31 @@ import com.example.mpdriver.NotificationApplication
 import com.example.mpdriver.components.Layout
 import com.example.mpdriver.components.feed.ActiveTask
 import com.example.mpdriver.components.feed.FeedTaskDataCard
+import com.example.mpdriver.data.models.AppTask
+import com.example.mpdriver.data.models.TaskStatus
 import com.example.mpdriver.type.StatusEnumQl
 import com.example.mpdriver.variables.JDEColor
+import com.example.mpdriver.variables.datetimeFormatFrom
+import com.example.mpdriver.viewmodels.MainViewModel
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.format.byUnicodePattern
 
 
+
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
-fun Feed(modifier: Modifier = Modifier, hostController: NavHostController) {
+fun Feed(modifier: Modifier = Modifier,
+         model: MainViewModel = viewModel(),
+         navigateToTasks: () -> Unit = {}) {
 //    Fetch active task
+
 
     var isLoading by remember {
         mutableStateOf(true)
     }
 
-    var activeTask by remember {
-        mutableStateOf<GetActiveTaskIdQuery.Task?>(null)
-    }
-    var plannedTasks by remember {
-        mutableStateOf(emptyList<GetActiveTaskIdQuery.PlannedTask>())
-    }
-    var completedTasks by remember {
-        mutableStateOf(emptyList<GetActiveTaskIdQuery.CompletedTask>())
-    }
-    val context = LocalContext.current
+
+//    val context = LocalContext.current
 
 
     val dateFormat = LocalDateTime.Format {
@@ -62,20 +64,20 @@ fun Feed(modifier: Modifier = Modifier, hostController: NavHostController) {
     val dataList = listOf(
         mapOf(
             "title" to "Запланированные задачи",
-            "count" to plannedTasks.count(),
-            "date" to when (plannedTasks.count()) {
+            "count" to model.plannedTasks.count(),
+            "date" to when (model.plannedTasks.count()) {
                 0 -> "-"
-                else -> dateFormat.format(LocalDateTime.parse(plannedTasks[0].startPln.toString()))
+                else -> dateFormat.format(LocalDateTime.parse(model.plannedTasks[0].startPln, datetimeFormatFrom))
             },
             "buttonLabel" to "Смотреть запланированные задачи",
             "dateDescription" to "Ближайшая",
         ),
         mapOf(
             "title" to "Завершенные задачи",
-            "count" to completedTasks.count(),
-            "date" to when (completedTasks.count()) {
+            "count" to model.completedTasks.count(),
+            "date" to when (model.completedTasks.count()) {
                 0 -> "-"
-                else -> dateFormat.format(LocalDateTime.parse(completedTasks[0].startPln.toString()))
+                else -> dateFormat.format(LocalDateTime.parse(model.completedTasks[0].startPln, datetimeFormatFrom))
             },
             "buttonLabel" to "Смотреть завершенные задачи",
             "dateDescription" to "Последняя",
@@ -85,18 +87,7 @@ fun Feed(modifier: Modifier = Modifier, hostController: NavHostController) {
         )
 
     LaunchedEffect(Unit) {
-//        val db = (context.applicationContext as NotificationApplication).db
-//        activeTask = db.taskDao().getActiveTask()?.let {
-//            GetActiveTaskIdQuery.Task(id = it.id.toString())
-//        }
-//
-//        completedTasks = db.taskDao().getCompletedTasks().map {
-//            GetActiveTaskIdQuery.CompletedTask(it.id.toString(), startPln = it.startPln)
-//        }
-//
-//        plannedTasks = db.taskDao().getNotDefinedTasks().map {
-//            GetActiveTaskIdQuery.PlannedTask(it.id.toString(), it.startPln)
-//        }
+        model.fetchTaskData()
         isLoading = false
     }
 
@@ -114,7 +105,7 @@ fun Feed(modifier: Modifier = Modifier, hostController: NavHostController) {
 
     Layout(dataList = dataList, header = {
         Column {
-            ActiveTask(activeTaskID = activeTask?.id?.toLong(), hostController = hostController)
+            ActiveTask(activeTask = model.activeTask)
             Spacer(modifier = Modifier.height(20.dp))
         }
 
@@ -124,9 +115,10 @@ fun Feed(modifier: Modifier = Modifier, hostController: NavHostController) {
             count = it["count"].toString().toInt(),
             dateDescription = it["dateDescription"].toString(),
             buttonLabel = it["buttonLabel"].toString(),
-            hostController = hostController, link = "feed/planned-tasks",
-            date = it["date"].toString()
-        )
+            date = it["date"].toString(),
+        ) {
+            navigateToTasks()
+        }
     }
 }
 
