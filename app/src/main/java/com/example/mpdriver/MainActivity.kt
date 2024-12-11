@@ -11,6 +11,11 @@ import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -23,9 +28,9 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.example.mpdriver.components.TaskComponent
 
 import com.example.mpdriver.data.api.RetrofitClient
-import com.example.mpdriver.data.models.AppTaskResponse
 import com.example.mpdriver.data.models.GetPhoneCodeRequest
 
 
@@ -49,7 +54,6 @@ class MainActivity : ComponentActivity() {
         MapKitFactory.setApiKey("f4385b18-0740-454a-a71f-d20da7e8fc3b")
         MapKitFactory.initialize(this)
         registerReceiver(timeTickReciever, IntentFilter(Intent.ACTION_TIME_TICK))
-        val viewModel: MainViewModel by viewModels()
 
         enableEdgeToEdge()
         setContent {
@@ -83,32 +87,62 @@ class MainActivity : ComponentActivity() {
 
 
 sealed class Routes(val route: String) {
-    object Auth: Routes("auth") {
-        object Code: Routes("auth/code")
+    data object Auth: Routes("auth") {
+        data object Code: Routes("auth/code")
     }
-    object Home: Routes("home")
+    data object Home: Routes("home") {
+        data object Feed: Routes("home/feed")
+        data object Events: Routes("home/events")
+        data object Notifications: Routes("home/notifications")
+        data object Chat: Routes("home/chat")
+
+        data object Task: Routes("home/task")
+    }
+
 }
 
+
 @Composable
-fun Navigator(model: AuthViewModel = viewModel()) {
+fun Navigator(model: AuthViewModel = viewModel(), mainViewModel: MainViewModel = viewModel(), authViewModel: AuthViewModel = viewModel()) {
     val navController = rememberNavController()
     val startDestination = "auth"
+
     NavHost(navController = navController , startDestination = startDestination) {
         composable(Routes.Auth.route) {
             PhoneInputScreen(navigateTo = {
                 navController.navigate(Routes.Auth.Code.route)
-            })
+            }, viewmodel = authViewModel)
         }
         composable(Routes.Auth.Code.route) {
-            PhoneCodeInputScreen()
+            PhoneCodeInputScreen(authViewModel = authViewModel, mainViewModel = mainViewModel, navigateTo = {
+                navController.navigate(Routes.Home.Task.route)
+            })
         }
-        composable(Routes.Home.route) {
-//            MainNavigator()
+        composable(Routes.Home.Feed.route) {}
+        composable(Routes.Home.Chat.route) {}
+        composable(Routes.Home.Events.route) {}
+        composable(Routes.Home.Notifications.route) {}
+        composable(Routes.Home.Task.route) {
+            val listState = rememberLazyListState()
+            val tasks = mainViewModel.tasks.observeAsState()
+            LaunchedEffect(Unit) {
+                mainViewModel.fetchTaskData()
+            }
+
+            tasks.value?.let { t ->
+                LazyColumn(state = listState) {
+                    items(items = t ) {
+                        TaskComponent(taskData = it)
+                    }
+                }
+            }
         }
+        
     }
 }
-//
-//
+
+
+
 //@OptIn(ExperimentalMaterial3Api::class)
 //@Composable
 //fun MainNavigator() {
@@ -124,31 +158,23 @@ fun Navigator(model: AuthViewModel = viewModel()) {
 //    }
 //
 //    val bottomNavController = rememberNavController()
-//    val context = LocalContext.current
 //
-//    val api = TaskApi(context)
 //
-//    LaunchedEffect(Unit) {
-//
-//        apolloClient.fetchAppDataToDB(context.applicationContext as NotificationApplication)
-//        loadingData = false
-//    }
-//
-//    if (loadingData)
-//        return Row(Modifier.fillMaxSize(), verticalAlignment = Alignment.CenterVertically) {
-//            Column(
-//                Modifier
-//                    .fillMaxWidth()
-//                    .padding(horizontal = 16.dp), horizontalAlignment = Alignment.CenterHorizontally
-//            ) {
-//                CircularProgressIndicator(color = JDEColor.PRIMARY.color)
-//                Text(
-//                    text = "Выполняется обновление даннных, Пожалуйста, подождите.",
-//                    fontSize = 16.sp,
-//                    textAlign = TextAlign.Center
-//                )
-//            }
-//        }
+////    if (loadingData)
+////        return Row(Modifier.fillMaxSize(), verticalAlignment = Alignment.CenterVertically) {
+////            Column(
+////                Modifier
+////                    .fillMaxWidth()
+////                    .padding(horizontal = 16.dp), horizontalAlignment = Alignment.CenterHorizontally
+////            ) {
+////                CircularProgressIndicator(color = JDEColor.PRIMARY.color)
+////                Text(
+////                    text = "Выполняется обновление даннных, Пожалуйста, подождите.",
+////                    fontSize = 16.sp,
+////                    textAlign = TextAlign.Center
+////                )
+////            }
+////        }
 //
 //
 //    Scaffold(
@@ -218,7 +244,7 @@ fun Navigator(model: AuthViewModel = viewModel()) {
 //                            .fillMaxWidth()
 //                            .fillMaxHeight()
 //                    ) {
-////                        CreateEventScreen()
+//                        CreateEventScreen()
 //                    }
 //
 //                }
@@ -294,7 +320,7 @@ fun Navigator(model: AuthViewModel = viewModel()) {
 //        }
 //    }
 //}
-//
+////
 //@Composable
 //fun Header(
 //    modifier: Modifier = Modifier,

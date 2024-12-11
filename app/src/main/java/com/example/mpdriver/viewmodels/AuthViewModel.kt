@@ -1,5 +1,7 @@
 package com.example.mpdriver.viewmodels
 
+import android.util.Base64
+import android.util.Log
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
@@ -8,9 +10,10 @@ import com.example.mpdriver.data.api.ApiService
 import com.example.mpdriver.data.api.RetrofitClient
 import com.example.mpdriver.data.models.GetPhoneCodeRequest
 import com.example.mpdriver.data.models.GetPhoneCodeResponse
+import okhttp3.Credentials
 
-class AuthViewModel : ViewModel() {
-    private val api = RetrofitClient.api
+class AuthViewModel : BaseViewModel() {
+
     private var _phoneNumber = MutableLiveData("")
     private var _phoneCode = MutableLiveData("")
 
@@ -38,7 +41,17 @@ class AuthViewModel : ViewModel() {
         return null
     }
 
-    fun authenticate() {
+    suspend fun authenticate(setAccessTokenHandler: (String) -> Unit = {}) {
+        if (phoneNumber.value.isNullOrEmpty() || phoneCode.value.isNullOrEmpty()) {
+            return
+        }
+        val cred = Credentials.basic(phoneNumber.value!!, phoneCode.value!!)
+
+        val data = api.getToken(cred)
+        data.accessToken.forEach {
+            setAccessTokenHandler(it)
+        }
+
 
     }
 

@@ -53,7 +53,6 @@ import com.example.mpdriver.components.EmptyList
 import com.example.mpdriver.components.IteractionButton
 import com.example.mpdriver.components.JDEButton
 import com.example.mpdriver.components.Subtask
-import com.example.mpdriver.components.Task
 //import com.example.mpdriver.storage.Database
 import com.example.mpdriver.type.StatusEnumQl
 
@@ -94,7 +93,7 @@ fun ActiveTask(activeTaskID: Long? = null, hostController: NavHostController) {
 
         activeTaskID.let {
             IteractionButton(onClick = { hostController.navigate("tasks/${activeTaskID}") }) {
-                Task(task_id = activeTaskID)
+//                Task(task_id = activeTaskID)
             }
         }
 

@@ -33,6 +33,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import com.example.mpdriver.variables.JDEColor
 import com.example.mpdriver.viewmodels.AuthViewModel
+import com.example.mpdriver.viewmodels.MainViewModel
 //import com.example.mpdriver.storage.api.Auth
 //import com.example.mpdriver.storage.Database
 import kotlinx.coroutines.MainScope
@@ -40,15 +41,21 @@ import kotlinx.coroutines.launch
 
 
 @Composable
-fun PhoneCodeInputScreen(model: AuthViewModel = viewModel()) {
+fun PhoneCodeInputScreen(
+    authViewModel: AuthViewModel = viewModel(),
+    mainViewModel: MainViewModel = viewModel(),
+    navigateTo: () -> Unit = {}
+) {
     var errorText by remember {
         mutableStateOf("")
     }
-    var code = model.phoneCode.observeAsState("")
+    var code = authViewModel.phoneCode.observeAsState("")
+    var phoneNumber = authViewModel.phoneNumber.observeAsState("")
 
     var isSuccess by remember {
         mutableStateOf(false)
     }
+
 
     Column(
         Modifier
@@ -63,6 +70,9 @@ fun PhoneCodeInputScreen(model: AuthViewModel = viewModel()) {
             fontWeight = FontWeight.Bold,
             textAlign = TextAlign.Center
         )
+
+        Text(text = phoneNumber.value)
+
         Spacer(modifier = Modifier.height(15.dp))
         Text(
             modifier = Modifier.fillMaxWidth(),
@@ -77,11 +87,14 @@ fun PhoneCodeInputScreen(model: AuthViewModel = viewModel()) {
         BasicTextField(
             value = code.value,
             onValueChange = {
-                model.onChangePhoneCode(it)
+                authViewModel.onChangePhoneCode(it)
                 if (code.value.length == 4) {
-//                    TODO Call API Method for auth
-//                    TODO Set access_token in MainViewModel
-//                    TODO set error_text on API Error
+                    MainScope().launch {
+                        authViewModel.authenticate { token ->
+                            mainViewModel.setAccessToken(token)
+                            navigateTo()
+                        }
+                    }
                 }
             },
 

@@ -41,7 +41,6 @@ import com.example.mpdriver.components.HeaderTabs
 import com.example.mpdriver.components.HeaderTabsData
 import com.example.mpdriver.components.Layout
 import com.example.mpdriver.components.StaleButton
-import com.example.mpdriver.components.Task
 //import com.example.mpdriver.database.models.APP_EVENT
 //import com.example.mpdriver.storage.CreateUpdateTaskData
 //import com.example.mpdriver.storage.Database
@@ -118,12 +117,13 @@ fun TasksList(modifier: Modifier = Modifier, hostController: NavHostController) 
         ) {
             activeTab = it
         }
-    }) {
-        Task(Modifier.padding(bottom = 10.dp), task_id = it.id.toLong()) {
-            when (activeTab) {
-                0 -> Button(
-                    onClick = {
-                        val nowTime = Clock.System.now().toEpochMilliseconds()
+    }){}}
+//    }) {
+//        Task(Modifier.padding(bottom = 10.dp), task_id = it.id.toLong()) {
+//            when (activeTab) {
+//                0 -> Button(
+//                    onClick = {
+//                        val nowTime = Clock.System.now().toEpochMilliseconds()
 //                        val sbt = db.taskDao().getSubtasksForTask(id = it.id.toLong())[0]
 //                        db.eventDao().insert(
 //                            mutableListOf(
@@ -153,22 +153,22 @@ fun TasksList(modifier: Modifier = Modifier, hostController: NavHostController) 
 //                            ))
 //                                    hostController . navigate ("feed")
 //
-                    },
-                    colors = ButtonDefaults.buttonColors(
-                        contentColor = Color.White,
-                        containerColor = Color.Black,
-                        disabledContentColor = Color.White,
-                        disabledContainerColor = Color.Gray
-                    ),
-                    shape = RoundedCornerShape(10.dp),
+//                    },
+//                    colors = ButtonDefaults.buttonColors(
+//                        contentColor = Color.White,
+//                        containerColor = Color.Black,
+//                        disabledContentColor = Color.White,
+//                        disabledContainerColor = Color.Gray
+//                    ),
+//                    shape = RoundedCornerShape(10.dp),
 //                    enabled = db.taskDao().getActiveTask() == null,
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Text(text = "Приступить к выполнению")
-                }
-            }
-        }
-    }
+//                    modifier = Modifier.fillMaxWidth()
+//                ) {
+//                    Text(text = "Приступить к выполнению")
+//                }
+//            }
+//        }
+//    }
 
-}
+//}
 
