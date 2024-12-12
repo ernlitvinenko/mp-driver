@@ -99,7 +99,7 @@ fun TaskComponent(
 
 
     var expanded by remember {
-        mutableStateOf(true)
+        mutableStateOf(false)
     }
 
     var nowTime by remember {

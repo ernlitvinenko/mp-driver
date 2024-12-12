@@ -21,7 +21,7 @@ class MainViewModel : BaseViewModel() {
         get() = if (tasks.value != null) tasks.value!!.filter { it.status == TaskStatus.NOT_DEFINED } else emptyList()
 
     val completedTasks: List<AppTask>
-        get() =  if (tasks.value != null) tasks.value!!.filter { it.status == TaskStatus.COMPLETED } else emptyList()
+        get() = if (tasks.value != null) tasks.value!!.filter { it.status == TaskStatus.COMPLETED } else emptyList()
 
     val activeTask: AppTask?
         get() {
@@ -34,6 +34,11 @@ class MainViewModel : BaseViewModel() {
             }
             return null
         }
+
+    fun isAuthorized(): Boolean {
+        return accessToken.value != null && accessToken.value != ""
+    }
+
     suspend fun fetchTaskData() {
         try {
             val tasksData = api.getTasks(generateSessionHeader())

@@ -18,6 +18,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -29,6 +30,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -46,6 +48,7 @@ import com.example.mpdriver.screens.Feed
 import com.example.mpdriver.screens.PhoneCodeInputScreen
 import com.example.mpdriver.screens.PhoneInputScreen
 import com.example.mpdriver.screens.TasksList
+import com.example.mpdriver.variables.JDEColor
 import com.example.mpdriver.variables.Routes
 import com.example.mpdriver.viewmodels.AuthViewModel
 import com.example.mpdriver.viewmodels.MainViewModel
@@ -53,6 +56,7 @@ import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.isGranted
 import com.google.accompanist.permissions.rememberPermissionState
 import com.yandex.mapkit.MapKitFactory
+import com.yandex.mapkit.transport.bicycle.Route
 
 
 class MainActivity : ComponentActivity() {
@@ -64,6 +68,7 @@ class MainActivity : ComponentActivity() {
         MapKitFactory.setApiKey("f4385b18-0740-454a-a71f-d20da7e8fc3b")
         MapKitFactory.initialize(this)
         registerReceiver(timeTickReciever, IntentFilter(Intent.ACTION_TIME_TICK))
+
 
         enableEdgeToEdge()
         setContent {
@@ -103,9 +108,43 @@ fun Navigator(
     authViewModel: AuthViewModel = viewModel()
 ) {
     val navController = rememberNavController()
-    val startDestination = "auth"
+    val context = LocalContext.current
 
-    NavHost(navController = navController, startDestination = startDestination) {
+    var startDestination by remember {
+        mutableStateOf<Routes>(Routes.Auth)
+    }
+    var isLoading by remember {
+        mutableStateOf(true)
+    }
+
+    fun navigateTo(route: Routes) {
+        navController.navigate(route.route)
+    }
+
+    fun navigateUp() {
+        navController.navigateUp()
+    }
+
+//    TODO write logic for token auth
+
+    LaunchedEffect(Unit) {
+        mainViewModel.initializeDatabase(context)
+        mainViewModel.initAccessToken()
+        if (mainViewModel.isAuthorized()) {
+            startDestination = Routes.Home.Feed
+            isLoading = false
+            return@LaunchedEffect
+        }
+        isLoading = false
+        startDestination = Routes.Auth
+    }
+
+    if (isLoading) {
+        CircularProgressIndicator(color = JDEColor.PRIMARY.color)
+        return
+    }
+
+    NavHost(navController = navController, startDestination = startDestination.route) {
         composable(Routes.Auth.route) {
             PhoneInputScreen(navigateTo = {
                 navController.navigate(Routes.Auth.Code.route)
@@ -120,30 +159,35 @@ fun Navigator(
                 })
         }
         composable(Routes.Home.Feed.route) {
-            HomeScreenLayout(navigateUp = { /*TODO*/ }, navigateTo = {}) {
+            HomeScreenLayout(navigateUp = { navigateUp() }, navigateTo = { navigateTo(it) }) {
                 Feed(navigateToTasks = {
                     navController.navigate(Routes.Home.Tasks.route)
                 }, model = mainViewModel)
             }
         }
         composable(Routes.Home.Chat.route) {
-            HomeScreenLayout(navigateUp = { /*TODO*/ }, navigateTo = {}) {
+            HomeScreenLayout(navigateUp = { navigateUp() }, navigateTo = { navigateTo(it) }) {
                 Text(text = "Чат")
             }
         }
         composable(Routes.Home.Events.route) {
-            HomeScreenLayout(navigateUp = { /*TODO*/ }, navigateTo = {}) {
+            HomeScreenLayout(navigateUp = { navigateUp() }, navigateTo = { navigateTo(it) }) {
                 Text(text = "События")
             }
         }
         composable(Routes.Home.Notifications.route) {
-            HomeScreenLayout(navigateUp = { /*TODO*/ }, navigateTo = {}) {
+            HomeScreenLayout(navigateUp = { navigateUp() }, navigateTo = { navigateTo(it) }) {
                 Text(text = "Уведомления")
             }
         }
         composable(Routes.Home.Tasks.route) {
-            HomeScreenLayout(navigateUp = { /*TODO*/ }, navigateTo = {}) {
+            HomeScreenLayout(navigateUp = { navigateUp() }, navigateTo = { navigateTo(it) }) {
                 TasksList(mainViewModel = mainViewModel)
+            }
+        }
+        composable(Routes.Home.Map.route) {
+            HomeScreenLayout(navigateUp = { navigateUp() }, navigateTo = { navigateTo(it) }) {
+                Text(text = "Карта")
             }
         }
     }
@@ -159,7 +203,9 @@ fun HomeScreenLayout(
 ) {
     Scaffold(
         topBar = {
-            Header(title = title, navigateUp = { navigateUp() })
+            Header(title = title,
+                navigateUp = { navigateUp() },
+                backLink = backlink)
         },
         bottomBar = {
             Footer(navigateTo = { navigateTo(it) })
