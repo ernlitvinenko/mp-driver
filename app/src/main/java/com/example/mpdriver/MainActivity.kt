@@ -35,6 +35,9 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import androidx.work.ExistingPeriodicWorkPolicy
+import androidx.work.PeriodicWorkRequestBuilder
+import androidx.work.WorkManager
 import com.example.mpdriver.components.Footer
 import com.example.mpdriver.components.Header
 import com.example.mpdriver.components.TaskComponent
@@ -48,6 +51,7 @@ import com.example.mpdriver.screens.Feed
 import com.example.mpdriver.screens.PhoneCodeInputScreen
 import com.example.mpdriver.screens.PhoneInputScreen
 import com.example.mpdriver.screens.TasksList
+import com.example.mpdriver.services.PingServiceWorker
 import com.example.mpdriver.variables.JDEColor
 import com.example.mpdriver.variables.Routes
 import com.example.mpdriver.viewmodels.AuthViewModel
@@ -57,6 +61,7 @@ import com.google.accompanist.permissions.isGranted
 import com.google.accompanist.permissions.rememberPermissionState
 import com.yandex.mapkit.MapKitFactory
 import com.yandex.mapkit.transport.bicycle.Route
+import java.util.concurrent.TimeUnit
 
 
 class MainActivity : ComponentActivity() {
@@ -68,6 +73,9 @@ class MainActivity : ComponentActivity() {
         MapKitFactory.setApiKey("f4385b18-0740-454a-a71f-d20da7e8fc3b")
         MapKitFactory.initialize(this)
         registerReceiver(timeTickReciever, IntentFilter(Intent.ACTION_TIME_TICK))
+//        val pingWorkManager = PeriodicWorkRequestBuilder<PingServiceWorker>(15, TimeUnit.SECONDS).build()
+
+//        WorkManager.getInstance(this).enqueueUniquePeriodicWork("PingServerWork", ExistingPeriodicWorkPolicy.KEEP, pingWorkManager)
 
 
         enableEdgeToEdge()
