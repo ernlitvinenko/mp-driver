@@ -1,9 +1,7 @@
 plugins {
     alias(libs.plugins.android.application)
-    id("com.google.gms.google-services")
     alias(libs.plugins.jetbrains.kotlin.android)
     alias(libs.plugins.kotlinx.serialization)
-    id("com.apollographql.apollo3").version("3.8.3")
     id("kotlin-kapt")
 }
 
@@ -57,12 +55,6 @@ android {
     }
 }
 
-apollo {
-    service("service") {
-        packageName.set("com.example.mpdriver")
-    }
-}
-
 dependencies {
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
@@ -85,21 +77,13 @@ dependencies {
     implementation(libs.kotlinx.serialization.json)
     implementation(libs.okhttp)
     implementation(libs.gson)
-    implementation(libs.mmkv)
     implementation(libs.kotlinx.datetime)
     implementation(libs.yandex.maps)
     implementation(libs.kotlin.coroutines)
-    implementation(platform("com.google.firebase:firebase-bom:33.1.1"))
-    implementation("com.apollographql.apollo3:apollo-runtime:3.8.3")
-    implementation("ru.gildor.coroutines:kotlin-coroutines-okhttp:1.0")
-
-
-    implementation("androidx.room:room-runtime:2.5.0") // Библиотека "Room"
-    kapt("androidx.room:room-compiler:2.5.0") // Кодогенератор
     implementation("androidx.room:room-ktx:2.5.0")
-
     implementation("com.google.accompanist:accompanist-permissions:0.34.0")
     implementation("com.squareup.retrofit2:retrofit:2.11.0") // Retrofit
     implementation("com.squareup.retrofit2:converter-gson:2.9.0") // Конвертер JSON
+    implementation("androidx.work:work-runtime-ktx:2.9.0")
 
 }

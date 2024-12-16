@@ -53,10 +53,16 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import com.example.mpdriver.GetSubtaskByIDQuery
 import com.example.mpdriver.R
+import com.example.mpdriver.data.models.AppLocationResponse
+import com.example.mpdriver.data.models.AppMarshResponse
+import com.example.mpdriver.data.models.AppMstResponse
+import com.example.mpdriver.data.models.AppTRSResponse
+import com.example.mpdriver.data.models.AppTask
+import com.example.mpdriver.data.models.MarshTemperatureProperty
+import com.example.mpdriver.data.models.TaskStatus
+import com.example.mpdriver.data.models.TaskType
 import com.example.mpdriver.recievers.TimeTickReciever
-import com.example.mpdriver.type.StatusEnumQl
 import com.example.mpdriver.variables.JDEColor
 import kotlinx.datetime.Clock
 import kotlinx.datetime.DateTimeUnit
@@ -77,8 +83,31 @@ import kotlin.math.abs
 fun Subtask(
     modifier: Modifier = Modifier,
     children: @Composable () -> Unit = {},
-    subtaskID: Long = 0,
-    footerButton: @Composable () -> Unit = {}
+    subtaskData: AppTask = AppTask(
+        id = 1125900288324087,
+        startPln = "10.04.2024 23:00:00",
+        endPln = "13.04.2024 20:00:00",
+        startFact = null,
+        endFact = null,
+        status = TaskStatus.COMPLETED,
+        taskType = TaskType.MOV_MARSH,
+        text = "Москва-Южный->Нижний Новгород->Чебоксары->Казань->Пермь->Екатеринбург",
+        route = AppMarshResponse(
+            id = 2252182222363240,
+            temperatureProperty = MarshTemperatureProperty.COLD,
+            name = "Москва-Южный->Екатеринбург",
+            trailer = AppTRSResponse(id = 2252083434660096, gost = "М985АО550"),
+            truck = AppTRSResponse(id = 2252096270239379, gost = "ХУ838177")
+        ),
+        events = null,
+        subtasks = null,
+        station = AppMstResponse(
+            id = 2252083418031070,
+            name = "Москва-Южный",
+            location = AppLocationResponse(lat = 55.48954f, lon = 37.75279f)
+        )
+    ),
+    footerButton : @Composable () -> Unit = {}
 ) {
 
     var isActionVisible by remember {
@@ -92,10 +121,10 @@ fun Subtask(
     var nowTime by remember {
         mutableStateOf(Clock.System.now())
     }
-    var subtaskResponse by remember {
-        mutableStateOf<GetSubtaskByIDQuery.Subtask?>(null)
-    }
-
+//    var subtaskResponse by remember {
+//        mutableStateOf<GetSubtaskByIDQuery.Subtask?>(null)
+//    }
+//
     LaunchedEffect(Unit) {
 //         subtaskResponse = apolloClient.query(GetSubtaskByIDQuery("1125904232173609", subtaskID.toString())).execute().data?.subtask
     }
@@ -107,10 +136,10 @@ fun Subtask(
     var startPln: LocalDateTime = Clock.System.now().toLocalDateTime(TimeZone.UTC)
     var endPln: LocalDateTime = Clock.System.now().toLocalDateTime(TimeZone.UTC)
 
-    subtaskResponse?.let {
-        startPln = LocalDateTime.parse(subtaskResponse?.startPln.toString())
-        endPln = LocalDateTime.parse(subtaskResponse?.endPln.toString())
-    }
+//    subtaskResponse?.let {
+//        startPln = LocalDateTime.parse(subtaskResponse?.startPln.toString())
+//        endPln = LocalDateTime.parse(subtaskResponse?.endPln.toString())
+//    }
 
 
     val dateFormat = LocalDateTime.Format {
@@ -131,13 +160,12 @@ fun Subtask(
     val leastHours = abs(leastBase) / 60 - leastDays * 24
     val leastMinutes = abs(leastBase) - leastDays * 60 * 24 - leastHours * 60
 
-
-    val status = when {
-        subtaskResponse?.status == StatusEnumQl.COMPLETED && !isDelay -> TaskColor.SUCCESS
-        subtaskResponse?.status == StatusEnumQl.COMPLETED && isDelay -> TaskColor.WARNING
-        subtaskResponse?.status == StatusEnumQl.CANCELLED -> TaskColor.WARNING
-        (subtaskResponse?.status == StatusEnumQl.IN_PROGRESS || subtaskResponse?.status == StatusEnumQl.NOT_DEFINED) && isDelay -> TaskColor.DANGER
-        else -> TaskColor.DEFAULT
+//
+    val status: TaskColor = when (subtaskData.status) {
+        TaskStatus.COMPLETED -> if (!isDelay) TaskColor.SUCCESS else TaskColor.WARNING
+        TaskStatus.CANCELLED -> TaskColor.WARNING
+        TaskStatus.IN_PROGRESS -> if (isDelay) TaskColor.DANGER else TaskColor.DEFAULT
+        TaskStatus.NOT_DEFINED -> if (isDelay) TaskColor.DANGER else TaskColor.DEFAULT
     }
 
 
@@ -165,7 +193,7 @@ fun Subtask(
             ) {
                 Text(
                     modifier = Modifier.weight(1f),
-                    text = "${subtaskResponse?.text}",
+                    text = subtaskData.text,
                     fontWeight = FontWeight.Bold,
                     fontSize = 20.sp
                 )
@@ -273,13 +301,13 @@ fun Subtask(
         }
     }
 
-    if (isActionVisible && subtaskResponse != null) {
-        IsSubtaskCompletedAction(setStateAction = { isActionVisible = false }, subtaskResponse!!)
+    if (isActionVisible) {
+        IsSubtaskCompletedAction(setStateAction = { isActionVisible = false }, subtaskData)
     }
 
 }
 
-enum class SheetState{
+enum class SheetState {
     HIDE,
     OPEN,
     FULL_SCREEN
@@ -289,7 +317,7 @@ enum class SheetState{
 @Composable
 fun IsSubtaskCompletedAction(
     setStateAction: () -> Unit = { },
-    subtask: GetSubtaskByIDQuery.Subtask
+    subtask: AppTask
 ) {
     var currentStep by remember {
         mutableStateOf(0)
@@ -364,12 +392,13 @@ fun IsSubtaskCompletedAction(
     }
 
     LaunchedEffect(sheetStateCurrent) {
-        when(sheetStateCurrent) {
+        when (sheetStateCurrent) {
             SheetState.OPEN -> sheetState.show()
             SheetState.HIDE -> {
                 setStateAction()
                 sheetState.hide()
             }
+
             SheetState.FULL_SCREEN -> sheetState.expand()
         }
     }
@@ -377,7 +406,7 @@ fun IsSubtaskCompletedAction(
 
 
 @Composable
-fun InitialStep(subtask: GetSubtaskByIDQuery.Subtask, controller: NavHostController) {
+fun InitialStep(subtask: AppTask, controller: NavHostController) {
     Column {
         JDEButton(type = ButtonType.SUCCESS, onClick = { controller.navigate("success") }) {
             Text(text = "Подзадача выполнена", fontSize = 15.sp, fontWeight = FontWeight.Bold)
@@ -394,7 +423,7 @@ fun InitialStep(subtask: GetSubtaskByIDQuery.Subtask, controller: NavHostControl
 
 @Composable
 fun SuccessStep(
-    subtask: GetSubtaskByIDQuery.Subtask,
+    subtask: AppTask,
     controller: NavHostController = rememberNavController(), cb: () -> Unit = {}
 ) {
 
@@ -560,7 +589,7 @@ fun transformText(it: String): String {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun FailureStep(
-    subtask: GetSubtaskByIDQuery.Subtask,
+    subtask: AppTask,
     controller: NavHostController = rememberNavController()
 ) {
 

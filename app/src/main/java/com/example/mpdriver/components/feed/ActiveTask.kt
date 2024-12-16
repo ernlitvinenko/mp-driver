@@ -41,11 +41,6 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
-import com.apollographql.apollo3.api.ApolloResponse
-import com.example.mpdriver.GetActiveSubtaskIDQuery
-import com.example.mpdriver.GetActiveTaskIdQuery
-import com.example.mpdriver.GetTaskByIdQuery
-import com.example.mpdriver.NotificationApplication
 //import com.example.mpdriver.storage.api.TaskResponse
 //import com.example.mpdriver.storage.api.apolloClient
 import com.example.mpdriver.components.ButtonType
@@ -56,7 +51,7 @@ import com.example.mpdriver.components.Subtask
 import com.example.mpdriver.components.TaskComponent
 import com.example.mpdriver.data.models.AppTask
 //import com.example.mpdriver.storage.Database
-import com.example.mpdriver.type.StatusEnumQl
+
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

@@ -14,7 +14,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.KeyboardArrowUp
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -34,11 +33,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.mpdriver.R
 import com.example.mpdriver.data.models.*
-//import com.example.mpdriver.storage.api.apolloClient
 import com.example.mpdriver.recievers.TimeTickReciever
-//import com.example.mpdriver.storage.Database
-import com.example.mpdriver.type.MarshTemperaturePropertyQL
-import com.example.mpdriver.type.StatusEnumQl
 import com.example.mpdriver.variables.JDEColor
 import com.example.mpdriver.variables.datetimeFormatFrom
 import kotlinx.datetime.Clock
@@ -46,10 +41,7 @@ import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.UtcOffset
 import kotlinx.datetime.asTimeZone
-import kotlinx.datetime.format.DateTimeFormat
-import kotlinx.datetime.format.Padding
 import kotlinx.datetime.format.byUnicodePattern
-import kotlinx.datetime.format.char
 import kotlinx.datetime.toInstant
 import kotlinx.datetime.until
 import kotlin.math.abs
