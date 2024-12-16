@@ -68,7 +68,10 @@ fun TasksList(modifier: Modifier = Modifier, mainViewModel: MainViewModel = view
         }
         return
     }
-    Layout(dataList = tasks.value, header = {
+    Layout(dataList = when(activeTab) {
+        ActiveTab.PLANNED -> mainViewModel.plannedTasks
+        ActiveTab.COMPLETED -> mainViewModel.completedTasks
+    }, header = {
         HeaderTabs(
             tabsData = listOf(
                 HeaderTabsData(ActiveTab.PLANNED.ordinal, "Запланированные"),
