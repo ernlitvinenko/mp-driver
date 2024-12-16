@@ -25,7 +25,7 @@ class DatabaseHelper(private val context: Context) :
 
     companion object {
         private const val DATABASE_NAME: String = "mp_driver_v1.db"
-        private const val DATABASE_VERSION: Int = 1
+        private const val DATABASE_VERSION: Int = 2
         private var instance: DatabaseHelper? = null
 
         fun newInstance(context: Context): DatabaseHelper {

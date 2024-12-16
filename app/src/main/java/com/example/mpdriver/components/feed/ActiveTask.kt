@@ -50,6 +50,8 @@ import com.example.mpdriver.components.JDEButton
 import com.example.mpdriver.components.Subtask
 import com.example.mpdriver.components.TaskComponent
 import com.example.mpdriver.data.models.AppTask
+import com.example.mpdriver.data.models.TaskStatus
+
 //import com.example.mpdriver.storage.Database
 
 
@@ -73,29 +75,29 @@ fun ActiveTask(activeTask: AppTask? = null) {
             fontSize = 18.sp
         )
 
-    //            TODO wrap it into itteraction button
+        //            TODO wrap it into itteraction button
         TaskComponent(taskData = activeTask)
 
-    //            IteractionButton(onClick = { hostController.navigate("tasks/${activeTaskID}") }) {
-    //            }
-        }
-
-        Spacer(modifier = Modifier.height(10.dp))
-        Text(
-            text = "Активная подзадача",
-            fontWeight = FontWeight.Bold,
-            fontSize = 18.sp
-        )
-        Spacer(modifier = Modifier.height(10.dp))
-
-
-//        responseGetActiveSubtaskID.let { task ->
-//            IteractionButton(onClick = { /*TODO*/ }) {
-//                responseGetActiveSubtaskID?.let {
-//                    Subtask(subtaskID = it.id.toLong())
-//                }
-//            }
-//        }
+        //            IteractionButton(onClick = { hostController.navigate("tasks/${activeTaskID}") }) {
+        //            }
     }
+
+    Spacer(modifier = Modifier.height(10.dp))
+    Text(
+        text = "Активная подзадача",
+        fontWeight = FontWeight.Bold,
+        fontSize = 18.sp
+    )
+    Spacer(modifier = Modifier.height(10.dp))
+    activeTask?.subtasks?.find { subtaskData ->
+        subtaskData.status == TaskStatus.IN_PROGRESS
+    }?.let {
+
+//        TODO("wrap it in itteraction button")
+        Subtask(subtaskData = it)
+    }
+
+
+}
 
 

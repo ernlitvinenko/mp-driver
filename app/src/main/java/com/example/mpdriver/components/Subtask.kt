@@ -64,6 +64,7 @@ import com.example.mpdriver.data.models.TaskStatus
 import com.example.mpdriver.data.models.TaskType
 import com.example.mpdriver.recievers.TimeTickReciever
 import com.example.mpdriver.variables.JDEColor
+import com.example.mpdriver.variables.datetimeFormatFrom
 import kotlinx.datetime.Clock
 import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.LocalDateTime
@@ -121,25 +122,15 @@ fun Subtask(
     var nowTime by remember {
         mutableStateOf(Clock.System.now())
     }
-//    var subtaskResponse by remember {
-//        mutableStateOf<GetSubtaskByIDQuery.Subtask?>(null)
-//    }
-//
     LaunchedEffect(Unit) {
-//         subtaskResponse = apolloClient.query(GetSubtaskByIDQuery("1125904232173609", subtaskID.toString())).execute().data?.subtask
     }
 
     TimeTickReciever.registerHandler {
         nowTime = Clock.System.now()
     }
 
-    var startPln: LocalDateTime = Clock.System.now().toLocalDateTime(TimeZone.UTC)
-    var endPln: LocalDateTime = Clock.System.now().toLocalDateTime(TimeZone.UTC)
 
-//    subtaskResponse?.let {
-//        startPln = LocalDateTime.parse(subtaskResponse?.startPln.toString())
-//        endPln = LocalDateTime.parse(subtaskResponse?.endPln.toString())
-//    }
+    val endPln = LocalDateTime.parse(subtaskData.endPln, datetimeFormatFrom)
 
 
     val dateFormat = LocalDateTime.Format {

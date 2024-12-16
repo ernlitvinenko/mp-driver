@@ -9,22 +9,16 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.activity.viewModels
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -35,23 +29,13 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import androidx.work.ExistingPeriodicWorkPolicy
-import androidx.work.PeriodicWorkRequestBuilder
-import androidx.work.WorkManager
 import com.example.mpdriver.components.Footer
 import com.example.mpdriver.components.Header
-import com.example.mpdriver.components.TaskComponent
-
-import com.example.mpdriver.data.api.RetrofitClient
-import com.example.mpdriver.data.models.GetPhoneCodeRequest
-
-
 import com.example.mpdriver.recievers.TimeTickReciever
 import com.example.mpdriver.screens.Feed
 import com.example.mpdriver.screens.PhoneCodeInputScreen
 import com.example.mpdriver.screens.PhoneInputScreen
 import com.example.mpdriver.screens.TasksList
-import com.example.mpdriver.services.PingServiceWorker
 import com.example.mpdriver.variables.JDEColor
 import com.example.mpdriver.variables.Routes
 import com.example.mpdriver.viewmodels.AuthViewModel
@@ -60,8 +44,6 @@ import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.isGranted
 import com.google.accompanist.permissions.rememberPermissionState
 import com.yandex.mapkit.MapKitFactory
-import com.yandex.mapkit.transport.bicycle.Route
-import java.util.concurrent.TimeUnit
 
 
 class MainActivity : ComponentActivity() {
@@ -133,7 +115,6 @@ fun Navigator(
         navController.navigateUp()
     }
 
-//    TODO write logic for token auth
 
     LaunchedEffect(Unit) {
         mainViewModel.initializeDatabase(context)
@@ -189,7 +170,8 @@ fun Navigator(
             }
         }
         composable(Routes.Home.Tasks.route) {
-            HomeScreenLayout(navigateUp = { navigateUp() }, navigateTo = { navigateTo(it) }) {
+            HomeScreenLayout(navigateUp = { navigateUp() },
+                navigateTo = { navigateTo(it) }, title = "Задачи") {
                 TasksList(mainViewModel = mainViewModel)
             }
         }

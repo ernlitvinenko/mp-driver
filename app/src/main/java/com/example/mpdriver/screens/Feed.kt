@@ -1,7 +1,6 @@
 package com.example.mpdriver.screens
 
 import android.os.Build
-import android.util.Log
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -28,52 +27,66 @@ import com.example.mpdriver.viewmodels.MainViewModel
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.format.byUnicodePattern
 
+private data class FeedDataListProps(
+    val title: String,
+    val count: Int,
+    val date: String,
+    val buttonLabel: String,
+    val dateDescription: String
+)
 
 
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
-fun Feed(modifier: Modifier = Modifier,
-         model: MainViewModel = viewModel(),
-         navigateToTasks: () -> Unit = {}) {
-//    Fetch active task
+fun Feed(
+    modifier: Modifier = Modifier,
+    model: MainViewModel = viewModel(),
+    navigateToTasks: () -> Unit = {}
+) {
 
-
+    //    Fetch active task
     var isLoading by remember {
         mutableStateOf(true)
     }
-
-
-//    val context = LocalContext.current
 
 
     val dateFormat = LocalDateTime.Format {
         byUnicodePattern("dd.MM.yyyy")
     }
 
+
     val dataList = listOf(
-        mapOf(
-            "title" to "Запланированные задачи",
-            "count" to model.plannedTasks.count(),
-            "date" to when (model.plannedTasks.count()) {
+        FeedDataListProps(
+            title = "Запланированные задачи",
+            count = model.plannedTasks.count(),
+            date = when (model.plannedTasks.count()) {
                 0 -> "-"
-                else -> dateFormat.format(LocalDateTime.parse(model.plannedTasks[0].startPln, datetimeFormatFrom))
+                else -> dateFormat.format(
+                    LocalDateTime.parse(
+                        model.plannedTasks[0].startPln,
+                        datetimeFormatFrom
+                    )
+                )
             },
-            "buttonLabel" to "Смотреть запланированные задачи",
-            "dateDescription" to "Ближайшая",
+            buttonLabel = "Смотреть запланированные задачи",
+            dateDescription = "Ближайшая"
         ),
-        mapOf(
-            "title" to "Завершенные задачи",
-            "count" to model.completedTasks.count(),
-            "date" to when (model.completedTasks.count()) {
+        FeedDataListProps(
+            title = "Завершенные задачи",
+            count = model.completedTasks.count(),
+            when (model.completedTasks.count()) {
                 0 -> "-"
-                else -> dateFormat.format(LocalDateTime.parse(model.completedTasks[0].startPln, datetimeFormatFrom))
+                else -> dateFormat.format(
+                    LocalDateTime.parse(
+                        model.completedTasks[0].startPln,
+                        datetimeFormatFrom
+                    )
+                )
             },
-            "buttonLabel" to "Смотреть завершенные задачи",
-            "dateDescription" to "Последняя",
-        ),
-
-
+            buttonLabel = "Смотреть завершенные задачи",
+            dateDescription = "Последняя"
         )
+    )
 
     LaunchedEffect(Unit) {
         model.fetchTaskData()
@@ -100,11 +113,11 @@ fun Feed(modifier: Modifier = Modifier,
 
     }) {
         FeedTaskDataCard(
-            title = it["title"].toString(),
-            count = it["count"].toString().toInt(),
-            dateDescription = it["dateDescription"].toString(),
-            buttonLabel = it["buttonLabel"].toString(),
-            date = it["date"].toString(),
+            title = it.title,
+            count = it.count,
+            dateDescription = it.dateDescription,
+            buttonLabel = it.buttonLabel,
+            date = it.date,
         ) {
             navigateToTasks()
         }

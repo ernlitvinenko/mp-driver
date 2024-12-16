@@ -10,6 +10,9 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import com.example.mpdriver.data.models.AppTask
 import com.example.mpdriver.data.models.TaskStatus
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import retrofit2.HttpException
 
 class MainViewModel : BaseViewModel() {
 
@@ -35,7 +38,8 @@ class MainViewModel : BaseViewModel() {
             return null
         }
 
-    fun isAuthorized(): Boolean {
+    suspend fun isAuthorized(): Boolean {
+        fetchTaskData()
         return accessToken.value != null && accessToken.value != ""
     }
 
@@ -43,8 +47,13 @@ class MainViewModel : BaseViewModel() {
         try {
             val tasksData = api.getTasks(generateSessionHeader())
             tasks.value = tasksData.appTasks
-        } catch (e: Exception) {
-            Log.d("fetchTaskData", "Error on fetching tasks: ${e.message}")
+        } catch (e: HttpException) {
+            Log.e("fetchTaskData", "Error on fetching tasks: ${e.message}")
+            Log.e("fetchTaskData", "Status code: ${e.code()}")
+
+            when (e.code()) {
+                401 -> dropAccessToken()
+            }
         }
 
     }

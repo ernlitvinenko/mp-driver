@@ -15,6 +15,20 @@ open class BaseViewModel: ViewModel() {
     internal val api = RetrofitClient.api
     internal var db: SQLiteDatabase? = null
 
+
+    fun dropAccessToken() {
+        accessToken.value = null
+        if (checkDBInstance()) {
+            try {
+                db!!.execSQL("delete from preferences where id=1")
+            }
+            catch (e: SQLException) {
+                Log.e("viewmodel_dropAccessToken", "dropAccessToken: ${e.message}")
+                return
+            }
+        }
+    }
+
     fun setAccessToken(token: String) {
         accessToken.value = token
 
@@ -37,6 +51,7 @@ open class BaseViewModel: ViewModel() {
             Log.w("viewmodel_initAccessToken", "initAccessToken: Can not init access token. No Database instance")
             return
         }
+
         var accessTokenData: String? = null
 
         val cursor = db?.rawQuery("select p_val from preferences where id = 1", null)
