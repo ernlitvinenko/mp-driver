@@ -11,6 +11,8 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -22,9 +24,11 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextField
+import androidx.compose.material3.TextFieldColors
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
@@ -39,9 +43,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.onFocusEvent
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
@@ -108,21 +114,16 @@ fun Subtask(
             location = AppLocationResponse(lat = 55.48954f, lon = 37.75279f)
         )
     ),
-    footerButton : @Composable () -> Unit = {}
+    footerButton: @Composable () -> Unit = {}
 ) {
 
     var isActionVisible by remember {
         mutableStateOf(false)
     }
 
-    var expanded by remember {
-        mutableStateOf(true)
-    }
 
     var nowTime by remember {
         mutableStateOf(Clock.System.now())
-    }
-    LaunchedEffect(Unit) {
     }
 
     TimeTickReciever.registerHandler {
@@ -319,7 +320,7 @@ fun IsSubtaskCompletedAction(
 
     val actionController = rememberNavController()
     val sheetState = rememberModalBottomSheetState(
-//        skipPartiallyExpanded = false,
+        skipPartiallyExpanded = true
     )
     var sheetStateCurrent by remember {
         mutableStateOf(SheetState.OPEN)
@@ -333,13 +334,15 @@ fun IsSubtaskCompletedAction(
         },
 
         containerColor = Color.White,
-        modifier = Modifier.fillMaxHeight(),
+//        modifier = ,
         sheetState = sheetState
     ) {
         Column(
             Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 16.dp)
+                .padding(bottom = 16.dp)
+                .imePadding()
         ) {
             Row(
                 modifier = Modifier
@@ -356,21 +359,20 @@ fun IsSubtaskCompletedAction(
             Column {
                 NavHost(navController = actionController, startDestination = "initial") {
                     composable("initial") {
+                        sheetStateCurrent = SheetState.OPEN
                         InitialStep(subtask = subtask, controller = actionController)
                     }
                     composable("success") {
                         title = "Когда вы выполнили подзадачу?"
-                        if (sheetStateCurrent == SheetState.OPEN) {
-                            sheetStateCurrent = SheetState.FULL_SCREEN
-                        }
+                        sheetStateCurrent = SheetState.OPEN
+
                         SuccessStep(subtask = subtask, controller = actionController, cb = {
                             sheetStateCurrent = SheetState.HIDE
                         })
                     }
+
                     composable("failure") {
-                        if (sheetStateCurrent == SheetState.OPEN) {
-                            sheetStateCurrent = SheetState.FULL_SCREEN
-                        }
+                        sheetStateCurrent = SheetState.OPEN
                         title = "Что помешало выполнить подзадачу?"
                         FailureStep(subtask = subtask, controller = actionController)
                     }
@@ -419,8 +421,6 @@ fun SuccessStep(
 ) {
 
     val now = Clock.System.now()
-    val ctx = LocalContext.current
-//    val db = (ctx.applicationContext as NotificationApplication).db
     val timeFormat = LocalDateTime.Format {
         hour()
         minute()
@@ -479,16 +479,23 @@ fun SuccessStep(
             Spacer(modifier = Modifier.height(10.dp))
 
             Row(Modifier.fillMaxWidth()) {
-                TextInput(modifier = Modifier.weight(.66f), date, {
-                    date = it.filter { it.isDigit() }
-                }, "Дата")
-                Spacer(modifier = Modifier.width(10.dp))
-                TextInput(
-                    modifier = Modifier.weight(.33f),
-                    time,
-                    { time = it.filter { it.isDigit() } },
-                    "Время"
+                TextField(
+                    value = date, onValueChange = { date = it },
+                    label = { Text(text = "Дата") },
+                    colors = TextFieldDefaults.colors(
+                        unfocusedContainerColor = JDEColor.BG_GRAY.color,
+                        focusedContainerColor = JDEColor.BG_GRAY.color,
+                        cursorColor = Color.Gray,
+                        focusedIndicatorColor = Color.Transparent,
+                        unfocusedIndicatorColor = Color.Transparent,
+                        focusedLabelColor = Color.Gray,
+                       focusedTextColor = Color.Black
+                    ),
+                    shape = RoundedCornerShape(10.dp),
+                    textStyle = TextStyle(fontWeight = FontWeight.Bold, fontSize = 18.sp)
                 )
+                Spacer(modifier = Modifier.width(10.dp))
+                TextField(value = time, onValueChange = { time = it })
             }
 
         }
@@ -657,63 +664,4 @@ fun FailureStep(
         Spacer(modifier = Modifier.height(20.dp))
         ActiveButton(onClick = { /*TODO*/ }, text = "Отправить", modifier = Modifier.fillMaxWidth())
     }
-}
-
-@OptIn(ExperimentalComposeUiApi::class)
-@Preview(showBackground = true)
-@Composable
-fun TextInput(
-    modifier: Modifier = Modifier,
-    value: String = "24.12.2023",
-    onValueChange: (String) -> Unit = {},
-    placeholder: String = "Дата"
-) {
-
-    var isFocused by remember {
-        mutableStateOf(true)
-    }
-
-    val kbController = LocalSoftwareKeyboardController.current
-
-
-    BasicTextField(
-        modifier = modifier
-            .onFocusEvent {
-                isFocused = it.isFocused
-            },
-        value = value,
-        onValueChange = onValueChange,
-        keyboardOptions = KeyboardOptions(
-            keyboardType = KeyboardType.Number,
-            imeAction = ImeAction.Done
-        ),
-        keyboardActions = KeyboardActions(onDone = {
-            kbController?.hide()
-        }),
-        decorationBox = {
-            Box(
-                Modifier
-                    .height(50.dp)
-                    .clip(RoundedCornerShape(10.dp))
-                    .background(JDEColor.TEXT_FIELD_BG_COLOR.color)
-                    .padding(horizontal = 10.dp, vertical = 5.dp)
-            ) {
-                Text(
-                    modifier = Modifier.align(if (isFocused || value != "") Alignment.TopStart else Alignment.CenterStart),
-                    text = placeholder,
-                    fontWeight = FontWeight.Normal,
-                    fontSize = if (isFocused || value != "") 13.sp else 18.sp,
-                    color = Color.Gray
-                )
-                if (isFocused || value != "") {
-                    Text(
-                        modifier = Modifier.align(Alignment.BottomStart),
-                        text = transformText(value),
-                        fontSize = 18.sp,
-                        fontWeight = FontWeight.Bold
-                    )
-                }
-            }
-
-        })
 }

@@ -86,4 +86,7 @@ dependencies {
     implementation("com.squareup.retrofit2:converter-gson:2.9.0") // Конвертер JSON
     implementation("androidx.work:work-runtime-ktx:2.9.0")
 
+
+    implementation("com.github.commandiron:WheelPickerCompose:1.1.11")
+
 }
