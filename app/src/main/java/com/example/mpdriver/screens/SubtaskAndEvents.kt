@@ -30,7 +30,7 @@ import androidx.compose.ui.unit.dp
 import com.example.mpdriver.components.HeaderTabs
 import com.example.mpdriver.components.HeaderTabsData
 import com.example.mpdriver.components.Layout
-import com.example.mpdriver.components.Subtask
+import com.example.mpdriver.components.subtask.Subtask
 import com.example.mpdriver.data.models.AppTask
 import com.example.mpdriver.variables.JDEColor
 
