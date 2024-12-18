@@ -20,6 +20,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -33,10 +34,17 @@ import com.example.mpdriver.components.HeaderTabs
 import com.example.mpdriver.components.HeaderTabsData
 import com.example.mpdriver.components.Layout
 import com.example.mpdriver.components.subtask.Subtask
+import com.example.mpdriver.components.subtask.sheet.steps.ApiCalls
+import com.example.mpdriver.components.subtask.sheet.steps.FailureStepApiCallData
+import com.example.mpdriver.components.subtask.sheet.steps.SuccessStepApiCallData
 import com.example.mpdriver.data.models.AppEventResponse
 import com.example.mpdriver.data.models.AppTask
+import com.example.mpdriver.data.models.TaskStatus
 import com.example.mpdriver.variables.JDEColor
 import com.example.mpdriver.viewmodels.MainViewModel
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 
 enum class SubtaskAndEventsTab {
@@ -47,7 +55,6 @@ enum class SubtaskAndEventsTab {
 @Preview(showBackground = true)
 @Composable
 fun SubtaskScreen(taskId: Long = 0, mainViewModel: MainViewModel = viewModel()) {
-
     var isLoading by remember {
         mutableStateOf(true)
     }
@@ -55,6 +62,8 @@ fun SubtaskScreen(taskId: Long = 0, mainViewModel: MainViewModel = viewModel()) 
     var floatingActionShowOffset by remember {
         mutableStateOf(0f)
     }
+
+    val coroutineScope = rememberCoroutineScope()
 
 
 
@@ -104,7 +113,20 @@ fun SubtaskScreen(taskId: Long = 0, mainViewModel: MainViewModel = viewModel()) 
                     }
                 }
             }) {
-                Subtask(subtaskData = it)
+                Subtask(subtaskData = it, apiCalls = object: ApiCalls {
+                    override fun success(data: SuccessStepApiCallData) {
+                        coroutineScope.launch {
+                            mainViewModel.changeTask(data.subtaskId, TaskStatus.COMPLETED, data.dateTime)
+                        }
+                    }
+
+                    override fun failure(data: FailureStepApiCallData) {
+                        coroutineScope.launch {
+                            mainViewModel.changeTask(data.subtaskId, TaskStatus.CANCELLED, data.datetime, data.reason)
+                        }
+                    }
+
+                })
             }
 
         }

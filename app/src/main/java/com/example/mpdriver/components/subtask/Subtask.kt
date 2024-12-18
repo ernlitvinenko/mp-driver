@@ -32,6 +32,8 @@ import com.example.mpdriver.components.InformationPlaceholderSmall
 import com.example.mpdriver.components.IteractionButton
 import com.example.mpdriver.components.TaskColor
 import com.example.mpdriver.components.subtask.sheet.SubtaskSheet
+import com.example.mpdriver.components.subtask.sheet.steps.ApiCalls
+import com.example.mpdriver.components.subtask.sheet.steps.SuccessStepApiCallData
 import com.example.mpdriver.data.models.AppLocationResponse
 import com.example.mpdriver.data.models.AppMarshResponse
 import com.example.mpdriver.data.models.AppMstResponse
@@ -55,10 +57,11 @@ import kotlinx.datetime.toInstant
 import kotlinx.datetime.until
 import kotlin.math.abs
 
-@Preview(showBackground = true)
+
 @Composable
 fun Subtask(
     modifier: Modifier = Modifier,
+    apiCalls: ApiCalls,
     children: @Composable () -> Unit = {},
     subtaskData: AppTask = AppTask(
         id = 1125900288324087,
@@ -255,7 +258,7 @@ fun Subtask(
     }
 
     if (isActionVisible) {
-        SubtaskSheet(setStateAction = { isActionVisible = false }, subtaskData)
+        SubtaskSheet(setStateAction = { isActionVisible = false }, subtaskData, apiCalls = apiCalls)
     }
 
 }

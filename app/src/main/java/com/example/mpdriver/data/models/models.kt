@@ -5,27 +5,48 @@ import com.google.gson.annotations.SerializedName
 enum class TaskStatus {
     // ID_VLST = 20303
     // MPDRIVER: Статус задачи
-    @SerializedName("Cancelled") CANCELLED,
-    @SerializedName("InProgress") IN_PROGRESS,
-    @SerializedName("Completed") COMPLETED,
-    @SerializedName("NotDefined") NOT_DEFINED
+    @SerializedName("Cancelled")
+    CANCELLED,
+
+    @SerializedName("InProgress")
+    IN_PROGRESS,
+
+    @SerializedName("Completed")
+    COMPLETED,
+
+    @SerializedName("NotDefined")
+    NOT_DEFINED
 }
 
 enum class TaskType {
 //    ID_VLST = 20301
 //    MPDRIVER: Типы событий
 
-    @SerializedName("MovMarsh") MOV_MARSH,
-    @SerializedName("Mst_In") MST_IN,
-    @SerializedName("Mst_Out") MST_OUT,
-    @SerializedName("SetUnLoading") SET_UNLOADING,
-    @SerializedName("SetLoading") SET_LOADING
+    @SerializedName("MovMarsh")
+    MOV_MARSH,
+
+    @SerializedName("Mst_In")
+    MST_IN,
+
+    @SerializedName("Mst_Out")
+    MST_OUT,
+
+    @SerializedName("SetUnLoading")
+    SET_UNLOADING,
+
+    @SerializedName("SetLoading")
+    SET_LOADING
 }
 
 enum class MarshTemperatureProperty {
-    @SerializedName("1") HOT,
-    @SerializedName("2") COLD,
-    @SerializedName("0") NOT_DEFINED
+    @SerializedName("1")
+    HOT,
+
+    @SerializedName("2")
+    COLD,
+
+    @SerializedName("0")
+    NOT_DEFINED
 }
 
 
@@ -63,19 +84,19 @@ data class AppTask(
     val station: AppMstResponse?
 )
 
-data class GetMPD_APP_TASK_RESPONSE (
+data class GetMPD_APP_TASK_RESPONSE(
     @SerializedName("app_tasks") val appTasks: List<AppTask>?,
     @SerializedName("events") val events: List<AppEventResponse>?
 )
 
 
-data class AppMstResponse (
+data class AppMstResponse(
     val id: Long,
     val name: String,
     val location: AppLocationResponse,
 )
 
-data class AppLocationResponse (
+data class AppLocationResponse(
     val lat: Float,
     val lon: Float
 )
@@ -98,4 +119,51 @@ data class AppMarshResponse(
 data class AppTRSResponse(
     val id: Long,
     val gost: String?
+)
+
+
+enum class AppEventKinds {
+    @SerializedName("8678")
+    ChangeTask,
+
+    @SerializedName("8795")
+    CreateNote,
+
+    @SerializedName("8797")
+    ChangeNote,
+
+    @SerializedName("8798")
+    CreateUserEvent
+}
+
+
+sealed class EventParameters(val parameterIndex: String) {
+    data object IdMarshTrs: EventParameters("8750")
+    data object NewTaskStatus: EventParameters("8794") {
+        data object NotDefined  : EventParameters("8687")
+        data object Cancelled   : EventParameters("8680")
+        data object InProgress  : EventParameters("8681")
+        data object Completed   : EventParameters("8682")
+    }
+    data object IdTrs: EventParameters("8667")
+    data object IdMst:  EventParameters("8668")
+    data object IdMarsh:EventParameters("8666")
+    data object DTS:    EventParameters("8669")
+    data object DTPo:   EventParameters("8670")
+}
+
+
+
+data class MpdSetAppEventsRequest(
+    @SerializedName("APP_EVENT_ID_REC") val recordId: String? = null,
+    @SerializedName("APP_EVENT_VID") val kind: AppEventKinds,
+    @SerializedName("APP_EVENT_TIP") val type: String? = null,
+    @SerializedName("APP_EVENT_DATA") val eventData: List<Map<String, String>>,
+    @SerializedName("APP_EVENT_DT") val dateTime: String,
+    @SerializedName("APP_EVENT_TEXT") val text: String? = null
+)
+
+data class MpdSetAppEventsResponse(
+    val status: Int?,
+    val error: String?
 )

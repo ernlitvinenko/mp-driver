@@ -1,9 +1,6 @@
 package com.example.mpdriver.data.api
 
-import com.example.mpdriver.data.models.GetMPD_APP_TASK_RESPONSE
-import com.example.mpdriver.data.models.GetPhoneCodeRequest
-import com.example.mpdriver.data.models.GetPhoneCodeResponse
-import com.example.mpdriver.data.models.GetTokenResponse
+import com.example.mpdriver.data.models.*
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import retrofit2.http.Body
@@ -24,6 +21,9 @@ interface ApiService {
 
     @GET("GetMPD_APP_TASKS")
     suspend fun getTasks(@Header("Pragma") dssession: String): GetMPD_APP_TASK_RESPONSE
+
+//    Создание событий
+    suspend fun createEvent(@Header("Pragma") dssession: String, @Body eventData: List<MpdSetAppEventsRequest>): MpdSetAppEventsResponse
 }
 
 object RetrofitClient {

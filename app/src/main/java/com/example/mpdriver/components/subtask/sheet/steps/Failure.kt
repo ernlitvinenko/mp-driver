@@ -49,7 +49,7 @@ import kotlinx.datetime.format
 import kotlinx.datetime.toLocalDateTime
 
 
-data class FailureStepApiCall(
+data class FailureStepApiCallData(
     val subtaskId: Long,
     val reason: String,
     val datetime: LocalDateTime
@@ -82,7 +82,7 @@ fun FailureStep(
             location = AppLocationResponse(lat = 55.48954f, lon = 37.75279f)
         )
     ),
-    apiCall: (FailureStepApiCall) -> Unit = {}
+    apiCall: (FailureStepApiCallData) -> Unit = {}
 ) {
     var failureDesk by remember {
         mutableStateOf("")
@@ -161,7 +161,7 @@ fun FailureStep(
 
         ActiveButton(onClick = {
             apiCall(
-                FailureStepApiCall(
+                FailureStepApiCallData(
                     subtaskId = subtask.id,
                     reason = failureDesk,
                     datetime = LocalDateTime.parse("${date} ${time}:00", datetimeFormatFrom)

@@ -17,8 +17,13 @@ sealed class ActionRoutes(val route: String) {
     data object Failure: ActionRoutes("failure")
 }
 
+interface ApiCalls {
+    fun success(data: SuccessStepApiCallData)
+    fun failure(data: FailureStepApiCallData)
+}
+
 @Composable
-fun Navigator(subtask: AppTask, onRouteChange: (ActionRoutes) -> Unit) {
+fun Navigator(subtask: AppTask, apiCalls: ApiCalls, onRouteChange: (ActionRoutes) -> Unit) {
     val controller = rememberNavController()
 
     var currentRoute by remember {
@@ -34,12 +39,18 @@ fun Navigator(subtask: AppTask, onRouteChange: (ActionRoutes) -> Unit) {
         }
         composable(ActionRoutes.Success.route) {
             currentRoute = ActionRoutes.Success
-            SuccessStep(subtask = subtask) {}
+            onRouteChange(currentRoute)
+            SuccessStep(subtask = subtask) {
+                apiCalls.success(it)
+            }
         }
 
         composable(ActionRoutes.Failure.route) {
             currentRoute = ActionRoutes.Failure
-            FailureStep(subtask = subtask) {}
+            onRouteChange(currentRoute)
+            FailureStep(subtask = subtask) {
+                apiCalls.failure(it)
+            }
         }
     }
 }

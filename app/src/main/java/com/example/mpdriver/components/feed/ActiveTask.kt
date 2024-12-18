@@ -18,13 +18,16 @@ import com.example.mpdriver.components.EmptyList
 import com.example.mpdriver.components.IteractionButton
 import com.example.mpdriver.components.subtask.Subtask
 import com.example.mpdriver.components.TaskComponent
+import com.example.mpdriver.components.subtask.sheet.steps.ApiCalls
 import com.example.mpdriver.data.models.AppTask
 import com.example.mpdriver.data.models.TaskStatus
 import com.example.mpdriver.variables.Routes
 
 
 @Composable
-fun ActiveTask(activeTask: AppTask? = null, navigateToTask: (Long) -> Unit = {}) {
+fun ActiveTask(activeTask: AppTask? = null,
+               apiCalls: ApiCalls,
+               navigateToTask: (Long) -> Unit = {}) {
 
     Column(
         Modifier
@@ -59,7 +62,7 @@ fun ActiveTask(activeTask: AppTask? = null, navigateToTask: (Long) -> Unit = {})
     activeTask?.subtasks?.find { subtaskData ->
         subtaskData.status == TaskStatus.IN_PROGRESS
     }?.let {
-        Subtask(subtaskData = it)
+        Subtask(subtaskData = it, apiCalls = apiCalls)
     }
 
 

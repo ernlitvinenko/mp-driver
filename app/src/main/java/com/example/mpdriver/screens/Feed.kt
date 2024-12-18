@@ -13,6 +13,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -21,10 +22,15 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.mpdriver.components.Layout
 import com.example.mpdriver.components.feed.ActiveTask
 import com.example.mpdriver.components.feed.FeedTaskDataCard
+import com.example.mpdriver.components.subtask.sheet.steps.ApiCalls
+import com.example.mpdriver.components.subtask.sheet.steps.FailureStepApiCallData
+import com.example.mpdriver.components.subtask.sheet.steps.SuccessStepApiCallData
+import com.example.mpdriver.data.models.TaskStatus
 import com.example.mpdriver.variables.JDEColor
 import com.example.mpdriver.variables.Routes
 import com.example.mpdriver.variables.datetimeFormatFrom
 import com.example.mpdriver.viewmodels.MainViewModel
+import kotlinx.coroutines.launch
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.format.byUnicodePattern
 
@@ -50,6 +56,7 @@ fun Feed(
         mutableStateOf(true)
     }
 
+    val coroutineScope = rememberCoroutineScope()
 
     val dateFormat = LocalDateTime.Format {
         byUnicodePattern("dd.MM.yyyy")
@@ -108,7 +115,20 @@ fun Feed(
 
     Layout(dataList = dataList, header = {
         Column {
-            ActiveTask(activeTask = model.activeTask, navigateToTask = {navigateToTask(it)})
+            ActiveTask(activeTask = model.activeTask, navigateToTask = {navigateToTask(it)}, apiCalls = object : ApiCalls {
+                override fun success(data: SuccessStepApiCallData) {
+                    coroutineScope.launch {
+                        model.changeTask(data.subtaskId, TaskStatus.COMPLETED, datetime = data.dateTime)
+                    }
+                }
+
+                override fun failure(data: FailureStepApiCallData) {
+                    coroutineScope.launch {
+                        model.changeTask(data.subtaskId, TaskStatus.CANCELLED, data.datetime, errorText = data.reason)
+                    }
+                }
+
+            })
             Spacer(modifier = Modifier.height(20.dp))
         }
 

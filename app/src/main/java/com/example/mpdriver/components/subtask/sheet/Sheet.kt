@@ -23,6 +23,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.mpdriver.components.subtask.sheet.steps.ActionRoutes
+import com.example.mpdriver.components.subtask.sheet.steps.ApiCalls
 import com.example.mpdriver.components.subtask.sheet.steps.Navigator
 import com.example.mpdriver.data.models.AppTask
 
@@ -45,7 +46,8 @@ private fun rememberSheetState(): MutableState<SheetState> {
 @Composable
 fun SubtaskSheet(
     setStateAction: () -> Unit = { },
-    subtask: AppTask
+    subtask: AppTask,
+    apiCalls: ApiCalls
 ) {
     var title by remember {
         mutableStateOf("Вам удалось выполнить подзадачу?")
@@ -54,7 +56,7 @@ fun SubtaskSheet(
     val sheetState = rememberModalBottomSheetState(
         skipPartiallyExpanded = true
     )
-    var sheetStateCurrent by rememberSheetState()
+    val sheetStateCurrent by rememberSheetState()
 
     ModalBottomSheet(
         onDismissRequest = {
@@ -83,7 +85,7 @@ fun SubtaskSheet(
                 )
             }
             Column {
-                Navigator(subtask = subtask) { route ->
+                Navigator(subtask = subtask, apiCalls = apiCalls) { route ->
                     when (route) {
                         ActionRoutes.Initial -> {
                             title ="Вам удалось выполнить подзадачу?"
