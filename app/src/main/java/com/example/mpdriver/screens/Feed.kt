@@ -22,6 +22,7 @@ import com.example.mpdriver.components.Layout
 import com.example.mpdriver.components.feed.ActiveTask
 import com.example.mpdriver.components.feed.FeedTaskDataCard
 import com.example.mpdriver.variables.JDEColor
+import com.example.mpdriver.variables.Routes
 import com.example.mpdriver.variables.datetimeFormatFrom
 import com.example.mpdriver.viewmodels.MainViewModel
 import kotlinx.datetime.LocalDateTime
@@ -36,12 +37,12 @@ private data class FeedDataListProps(
 )
 
 
-@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun Feed(
     modifier: Modifier = Modifier,
     model: MainViewModel = viewModel(),
-    navigateToTasks: () -> Unit = {}
+    navigateToTask: (Long) -> Unit = {},
+    navigateToTasks: () -> Unit = {},
 ) {
 
     //    Fetch active task
@@ -107,7 +108,7 @@ fun Feed(
 
     Layout(dataList = dataList, header = {
         Column {
-            ActiveTask(activeTask = model.activeTask)
+            ActiveTask(activeTask = model.activeTask, navigateToTask = {navigateToTask(it)})
             Spacer(modifier = Modifier.height(20.dp))
         }
 

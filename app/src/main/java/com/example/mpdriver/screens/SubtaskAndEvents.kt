@@ -17,6 +17,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -27,19 +28,25 @@ import androidx.compose.ui.layout.boundsInParent
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.mpdriver.components.HeaderTabs
 import com.example.mpdriver.components.HeaderTabsData
 import com.example.mpdriver.components.Layout
 import com.example.mpdriver.components.subtask.Subtask
+import com.example.mpdriver.data.models.AppEventResponse
 import com.example.mpdriver.data.models.AppTask
 import com.example.mpdriver.variables.JDEColor
+import com.example.mpdriver.viewmodels.MainViewModel
 
+
+enum class SubtaskAndEventsTab {
+    SUBTASKS,
+    EVENTS
+}
 
 @Preview(showBackground = true)
 @Composable
-fun SubtaskScreen(taskId: Long = 0) {
-
-//    var api = TaskApi()
+fun SubtaskScreen(taskId: Long = 0, mainViewModel: MainViewModel = viewModel()) {
 
     var isLoading by remember {
         mutableStateOf(true)
@@ -50,25 +57,19 @@ fun SubtaskScreen(taskId: Long = 0) {
     }
 
 
-    var datalist by remember {
-        mutableStateOf(emptyList<AppTask>())
-    }
 
     var activeTab by remember {
-        mutableStateOf(0)
+        mutableStateOf<SubtaskAndEventsTab>(SubtaskAndEventsTab.SUBTASKS)
     }
 
-    val listState = rememberLazyListState()
-    var offset = listState.firstVisibleItemScrollOffset + listState.firstVisibleItemIndex
 
     val tabsData =
-        listOf<HeaderTabsData>(HeaderTabsData(0, "Подзадачи"), HeaderTabsData(1, "События"))
+        listOf(
+            HeaderTabsData(0, "Подзадачи"),
+            HeaderTabsData(1, "События")
+        )
 
     LaunchedEffect(Unit) {
-//        val task = Database.tasks.find { it.id == taskId.toString() }
-//        datalist = Database.subtasks.filter { sbt ->
-//            task!!.subtasks.find { it.id == sbt.id } != null
-//        }.sortedBy { LocalDateTime.parse(it.startPln.toString()) }
         isLoading = false
     }
 
@@ -84,31 +85,68 @@ fun SubtaskScreen(taskId: Long = 0) {
         return
     }
 
-    Layout(state = listState, dataList = datalist, header = {
-        HeaderTabs(modifier = Modifier.onGloballyPositioned { lc ->
-            val cords = lc.boundsInParent()
-            floatingActionShowOffset = cords.bottom
-        }, tabsData = tabsData, activeTab = activeTab) {
-            activeTab = it
-        }
-    }) {
-        Subtask(subtaskData = it)
-    }
 
-    AnimatedVisibility(
-        visible = offset + 200 > floatingActionShowOffset + 100,
-        enter = slideInVertically() + fadeIn(),
-        exit = slideOutVertically() + fadeOut()
-    ) {
-        ExtendedFloatingActionButton(
-            onClick = { /*TODO*/ },
-            shape = RoundedCornerShape(10.dp),
-            containerColor = Color.White,
-            contentColor = Color.Black
-        ) {
-            Row(Modifier.fillMaxWidth()) {
-                Text(text = "Скрыть завершенные задачи")
+    when (activeTab) {
+        SubtaskAndEventsTab.SUBTASKS -> {
+            val dataList = mainViewModel.tasks.value?.find { task ->
+                task.id == taskId
+            }?.subtasks
+            val listState = rememberLazyListState()
+
+            Layout(state = listState, dataList = dataList ?: emptyList(), header = {
+                HeaderTabs(modifier = Modifier.onGloballyPositioned { lc ->
+                    val cords = lc.boundsInParent()
+                    floatingActionShowOffset = cords.bottom
+                }, tabsData = tabsData, activeTab = activeTab.ordinal) {
+                    activeTab = when (it) {
+                        0 -> SubtaskAndEventsTab.SUBTASKS
+                        else -> SubtaskAndEventsTab.EVENTS
+                    }
+                }
+            }) {
+                Subtask(subtaskData = it)
+            }
+
+        }
+        SubtaskAndEventsTab.EVENTS -> {
+
+            val dataList = mainViewModel.tasks.value?.find { task ->
+                task.id == taskId
+            }?.events
+
+            val listState = rememberLazyListState()
+            Layout(state = listState, dataList = dataList ?: emptyList(), header = {
+                HeaderTabs(modifier = Modifier.onGloballyPositioned { lc ->
+                    val cords = lc.boundsInParent()
+                    floatingActionShowOffset = cords.bottom
+                }, tabsData = tabsData, activeTab = activeTab.ordinal) {
+                    activeTab = when (it) {
+                        0 -> SubtaskAndEventsTab.SUBTASKS
+                        else -> SubtaskAndEventsTab.EVENTS
+                    }
+                }
+            }) {
+                Text(text = it.text ?: "-")
             }
         }
     }
+
+
+
+//    AnimatedVisibility(
+//        visible = offset + 200 > floatingActionShowOffset + 100,
+//        enter = slideInVertically() + fadeIn(),
+//        exit = slideOutVertically() + fadeOut()
+//    ) {
+//        ExtendedFloatingActionButton(
+//            onClick = { /*TODO*/ },
+//            shape = RoundedCornerShape(10.dp),
+//            containerColor = Color.White,
+//            contentColor = Color.Black
+//        ) {
+//            Row(Modifier.fillMaxWidth()) {
+//                Text(text = "Скрыть завершенные задачи")
+//            }
+//        }
+//    }
 }

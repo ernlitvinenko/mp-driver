@@ -29,14 +29,18 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
 import com.example.mpdriver.components.Footer
 import com.example.mpdriver.components.Header
 import com.example.mpdriver.recievers.TimeTickReciever
 import com.example.mpdriver.screens.Feed
 import com.example.mpdriver.screens.PhoneCodeInputScreen
 import com.example.mpdriver.screens.PhoneInputScreen
+import com.example.mpdriver.screens.SubtaskAndEventsTab
+import com.example.mpdriver.screens.SubtaskScreen
 import com.example.mpdriver.screens.TasksList
 import com.example.mpdriver.variables.JDEColor
+import com.example.mpdriver.variables.Route
 import com.example.mpdriver.variables.Routes
 import com.example.mpdriver.viewmodels.AuthViewModel
 import com.example.mpdriver.viewmodels.MainViewModel
@@ -101,13 +105,13 @@ fun Navigator(
     val context = LocalContext.current
 
     var startDestination by remember {
-        mutableStateOf<Routes>(Routes.Auth)
+        mutableStateOf<Route>(Routes.Auth)
     }
     var isLoading by remember {
         mutableStateOf(true)
     }
 
-    fun navigateTo(route: Routes) {
+    fun navigateTo(route: Route) {
         navController.navigate(route.route)
     }
 
@@ -136,7 +140,7 @@ fun Navigator(
     NavHost(navController = navController, startDestination = startDestination.route) {
         composable(Routes.Auth.route) {
             PhoneInputScreen(navigateTo = {
-                navController.navigate(Routes.Auth.Code.route)
+                navigateTo(Routes.Auth.Code)
             }, viewmodel = authViewModel)
         }
         composable(Routes.Auth.Code.route) {
@@ -144,14 +148,16 @@ fun Navigator(
                 authViewModel = authViewModel,
                 mainViewModel = mainViewModel,
                 navigateTo = {
-                    navController.navigate(Routes.Home.Feed.route)
+                    navigateTo(Routes.Home.Feed)
                 })
         }
         composable(Routes.Home.Feed.route) {
             HomeScreenLayout(navigateUp = { navigateUp() }, navigateTo = { navigateTo(it) }) {
                 Feed(navigateToTasks = {
                     navController.navigate(Routes.Home.Tasks.route)
-                }, model = mainViewModel)
+                }, model = mainViewModel, navigateToTask = {
+                    navigateTo(Routes.Home.Tasks.Task.navigateTo(it))
+                })
             }
         }
         composable(Routes.Home.Chat.route) {
@@ -171,10 +177,20 @@ fun Navigator(
         }
         composable(Routes.Home.Tasks.route) {
             HomeScreenLayout(navigateUp = { navigateUp() },
-                navigateTo = { navigateTo(it) }, title = "Задачи") {
+                navigateTo = { navigateTo(it) }, title = "Задачи"
+            ) {
                 TasksList(mainViewModel = mainViewModel)
             }
         }
+        composable(
+            Routes.Home.Tasks.Task.route,
+            arguments = Routes.Home.Tasks.Task.navArguments
+        ) { stackEntry ->
+            HomeScreenLayout(navigateUp = { navigateUp() }, navigateTo = {navigateTo(it)}, title = "Детали задачи", backlink = true) {
+                SubtaskScreen(Routes.Home.Tasks.Task.backStack(stackEntry)!!, mainViewModel)
+            }
+        }
+
         composable(Routes.Home.Map.route) {
             HomeScreenLayout(navigateUp = { navigateUp() }, navigateTo = { navigateTo(it) }) {
                 Text(text = "Карта")
@@ -186,16 +202,18 @@ fun Navigator(
 @Composable
 fun HomeScreenLayout(
     navigateUp: () -> Unit,
-    navigateTo: (Routes) -> Unit,
+    navigateTo: (Route) -> Unit,
     title: String = "Лента",
     backlink: Boolean = false,
     content: @Composable () -> Unit
 ) {
     Scaffold(
         topBar = {
-            Header(title = title,
+            Header(
+                title = title,
                 navigateUp = { navigateUp() },
-                backLink = backlink)
+                backLink = backlink
+            )
         },
         bottomBar = {
             Footer(navigateTo = { navigateTo(it) })

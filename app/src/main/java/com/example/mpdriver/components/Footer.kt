@@ -26,6 +26,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
 import com.example.mpdriver.R
+import com.example.mpdriver.variables.Route
 import com.example.mpdriver.variables.Routes
 
 
@@ -37,14 +38,14 @@ private data class FooterNavMenuLabel(
 
 
 private data class FooterLinkData(
-    val link: Routes,
+    val link: Route,
     val label: FooterNavMenuLabel
 )
 
 @Composable
 fun Footer(
     modifier: Modifier = Modifier,
-    navigateTo: (Routes) -> Unit = {}
+    navigateTo: (Route) -> Unit = {}
 ) {
 
     val menuItems = listOf(
@@ -71,7 +72,7 @@ fun Footer(
     )
 
     var activeRoute by remember {
-        mutableStateOf<Routes>(Routes.Home.Feed)
+        mutableStateOf<Route>(Routes.Home.Feed)
     }
 
     Row(

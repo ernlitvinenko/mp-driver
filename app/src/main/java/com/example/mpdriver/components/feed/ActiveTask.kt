@@ -15,17 +15,16 @@ import androidx.compose.ui.unit.sp
 //import com.example.mpdriver.storage.api.TaskResponse
 //import com.example.mpdriver.storage.api.apolloClient
 import com.example.mpdriver.components.EmptyList
+import com.example.mpdriver.components.IteractionButton
 import com.example.mpdriver.components.subtask.Subtask
 import com.example.mpdriver.components.TaskComponent
 import com.example.mpdriver.data.models.AppTask
 import com.example.mpdriver.data.models.TaskStatus
+import com.example.mpdriver.variables.Routes
 
-//import com.example.mpdriver.storage.Database
 
-
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ActiveTask(activeTask: AppTask? = null) {
+fun ActiveTask(activeTask: AppTask? = null, navigateToTask: (Long) -> Unit = {}) {
 
     Column(
         Modifier
@@ -43,11 +42,11 @@ fun ActiveTask(activeTask: AppTask? = null) {
             fontSize = 18.sp
         )
 
-        //            TODO wrap it into itteraction button
-        TaskComponent(taskData = activeTask)
-
-        //            IteractionButton(onClick = { hostController.navigate("tasks/${activeTaskID}") }) {
-        //            }
+        IteractionButton(onClick = {
+            navigateToTask(activeTask.id)
+        }) {
+            TaskComponent(taskData = activeTask)
+        }
     }
 
     Spacer(modifier = Modifier.height(10.dp))
@@ -60,8 +59,6 @@ fun ActiveTask(activeTask: AppTask? = null) {
     activeTask?.subtasks?.find { subtaskData ->
         subtaskData.status == TaskStatus.IN_PROGRESS
     }?.let {
-
-//        TODO("wrap it in itteraction button")
         Subtask(subtaskData = it)
     }
 
