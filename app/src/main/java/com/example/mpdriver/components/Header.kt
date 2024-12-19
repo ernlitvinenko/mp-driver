@@ -28,7 +28,8 @@ fun Header(
     modifier: Modifier = Modifier,
     title: String = "Лента",
     backLink: Boolean = false,
-    navigateUp: () -> Unit = {}
+    openSettingsAction: () -> Unit = {},
+    navigateUp: () -> Unit = {},
 ) {
     Row(
         modifier = modifier
@@ -58,7 +59,7 @@ fun Header(
             )
             if (!backLink) {
                 TextButton(
-                    onClick = { /*TODO*/ },
+                    onClick = { openSettingsAction() },
                     colors = ButtonDefaults.textButtonColors(
                         contentColor = Color.Black,
                     )

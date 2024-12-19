@@ -1,4 +1,5 @@
 package com.example.mpdriver.screens
+import android.util.Log
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -20,24 +21,25 @@ import com.yandex.mapkit.mapview.MapView as YaMapView
 
 @Composable
 fun MapScreen() {
-    var map: YaMapView = YaMapView(LocalContext.current)
     val ctx = LocalContext.current
+    val map: YaMapView = YaMapView(ctx)
+
 
     ComposableLifecycle { _, event ->
         when(event) {
             Lifecycle.Event.ON_START -> {
                 MapKitFactory.getInstance().onStart()
-                println("MAP STARTED")
+                Log.d("MapScreen","MAP STARTED")
                 map.onStart()
             }
             Lifecycle.Event.ON_STOP -> {
                 MapKitFactory.getInstance().onStop()
-                println("MAP STOPPED")
+                Log.d("MapScreen","MAP STOPPED")
                 map.onStop()
             }
             Lifecycle.Event.ON_CREATE -> {
                 MapKitFactory.initialize(ctx)
-                println("MAP CREATED")
+                Log.d("MapScreen", "MAP CREATED")
             }
             else -> {}
         }

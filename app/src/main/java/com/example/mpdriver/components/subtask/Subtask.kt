@@ -165,7 +165,7 @@ fun Subtask(
 
             Text(
                 modifier = Modifier.padding(bottom = 5.dp),
-                text = "Подзадача доожна быть выполнена: ",
+                text = "Подзадача должна быть выполнена: ",
                 fontWeight = FontWeight.Bold,
                 fontSize = 14.sp
             )

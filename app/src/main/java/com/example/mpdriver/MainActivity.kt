@@ -32,8 +32,10 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.example.mpdriver.components.Footer
 import com.example.mpdriver.components.Header
+import com.example.mpdriver.components.HomeScreenLayout
 import com.example.mpdriver.recievers.TimeTickReciever
 import com.example.mpdriver.screens.Feed
+import com.example.mpdriver.screens.MapScreen
 import com.example.mpdriver.screens.PhoneCodeInputScreen
 import com.example.mpdriver.screens.PhoneInputScreen
 import com.example.mpdriver.screens.SubtaskAndEventsTab
@@ -199,40 +201,10 @@ fun Navigator(
         }
 
         composable(Routes.Home.Map.route) {
-            HomeScreenLayout(navigateUp = { navigateUp() }, navigateTo = { navigateTo(it) }) {
-                Text(text = "Карта")
-            }
-        }
-    }
-}
-
-@Composable
-fun HomeScreenLayout(
-    navigateUp: () -> Unit,
-    navigateTo: (Route) -> Unit,
-    title: String = "Лента",
-    backlink: Boolean = false,
-    content: @Composable () -> Unit
-) {
-    Scaffold(
-        topBar = {
-            Header(
-                title = title,
-                navigateUp = { navigateUp() },
-                backLink = backlink
-            )
-        },
-        bottomBar = {
-            Footer(navigateTo = { navigateTo(it) })
-        }
-    ) {
-        Box(modifier = Modifier.padding(it)) {
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .fillMaxHeight()
-            ) {
-                content()
+            HomeScreenLayout(navigateUp = { navigateUp() },
+                navigateTo = { navigateTo(it) },
+                title = "Карта") {
+                MapScreen()
             }
         }
     }
