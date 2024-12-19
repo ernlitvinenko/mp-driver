@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -26,14 +27,20 @@ enum class ButtonType {
     DEFAULT
 }
 
+@Preview(showBackground = true)
 @Composable
-fun ActiveButton(onClick: () -> Unit, modifier: Modifier = Modifier, text: String) {
+fun ActiveButton(onClick: () -> Unit = {}, modifier: Modifier = Modifier, text: String = "Some text",
+                 isLoading: Boolean = false) {
     Button(
         modifier = modifier,
         onClick = onClick,
         colors = ButtonDefaults.buttonColors(containerColor = Color.Black),
-        shape = RoundedCornerShape(10.dp)
+        shape = RoundedCornerShape(10.dp), enabled = !isLoading
     ) {
+        if (isLoading) {
+            CircularProgressIndicator(modifier = Modifier.padding(5.dp), color = JDEColor.PRIMARY.color)
+            return@Button
+        }
         Text(text = text)
     }
 }

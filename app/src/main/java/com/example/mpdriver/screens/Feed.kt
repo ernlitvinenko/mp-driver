@@ -30,7 +30,9 @@ import com.example.mpdriver.variables.JDEColor
 import com.example.mpdriver.variables.Routes
 import com.example.mpdriver.variables.datetimeFormatFrom
 import com.example.mpdriver.viewmodels.MainViewModel
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.format.byUnicodePattern
 
@@ -47,6 +49,7 @@ private data class FeedDataListProps(
 fun Feed(
     modifier: Modifier = Modifier,
     model: MainViewModel = viewModel(),
+    navigateToHome: () -> Unit = {},
     navigateToTask: (Long) -> Unit = {},
     navigateToTasks: () -> Unit = {},
 ) {
@@ -119,12 +122,20 @@ fun Feed(
                 override fun success(data: SuccessStepApiCallData) {
                     coroutineScope.launch {
                         model.changeTask(data.subtaskId, TaskStatus.COMPLETED, datetime = data.dateTime)
+                        model.fetchTaskData()
+                        withContext(Dispatchers.Main) {
+                            navigateToHome()
+                        }
                     }
                 }
 
                 override fun failure(data: FailureStepApiCallData) {
                     coroutineScope.launch {
                         model.changeTask(data.subtaskId, TaskStatus.CANCELLED, data.datetime, errorText = data.reason)
+                        model.fetchTaskData()
+                       withContext(Dispatchers.Main) {
+                           navigateToHome()
+                       }
                     }
                 }
 

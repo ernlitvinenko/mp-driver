@@ -157,7 +157,8 @@ fun Navigator(
                     navController.navigate(Routes.Home.Tasks.route)
                 }, model = mainViewModel, navigateToTask = {
                     navigateTo(Routes.Home.Tasks.Task.navigateTo(it))
-                })
+                },
+                    navigateToHome = { navigateTo(Routes.Home.Feed) })
             }
         }
         composable(Routes.Home.Chat.route) {
@@ -176,7 +177,8 @@ fun Navigator(
             }
         }
         composable(Routes.Home.Tasks.route) {
-            HomeScreenLayout(navigateUp = { navigateUp() },
+            HomeScreenLayout(
+                navigateUp = { navigateUp() },
                 navigateTo = { navigateTo(it) }, title = "Задачи"
             ) {
                 TasksList(mainViewModel = mainViewModel)
@@ -186,7 +188,12 @@ fun Navigator(
             Routes.Home.Tasks.Task.route,
             arguments = Routes.Home.Tasks.Task.navArguments
         ) { stackEntry ->
-            HomeScreenLayout(navigateUp = { navigateUp() }, navigateTo = {navigateTo(it)}, title = "Детали задачи", backlink = true) {
+            HomeScreenLayout(
+                navigateUp = { navigateUp() },
+                navigateTo = { navigateTo(it) },
+                title = "Детали задачи",
+                backlink = true
+            ) {
                 SubtaskScreen(Routes.Home.Tasks.Task.backStack(stackEntry)!!, mainViewModel)
             }
         }

@@ -23,6 +23,7 @@ interface ApiService {
     suspend fun getTasks(@Header("Pragma") dssession: String): GetMPD_APP_TASK_RESPONSE
 
 //    Создание событий
+    @POST("MPD_SET_APP_EVENTS")
     suspend fun createEvent(@Header("Pragma") dssession: String, @Body eventData: List<MpdSetAppEventsRequest>): MpdSetAppEventsResponse
 }
 

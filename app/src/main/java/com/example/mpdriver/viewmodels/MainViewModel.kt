@@ -237,8 +237,8 @@ class MainViewModel : BaseViewModel() {
     ) {
 
         val requestData = when (task.subtasks) {
-            null -> buildRequestData(task, task, status, datetime, errorText)
-            else -> buildRequestData(findParentTask(task.id)!!, task, status, datetime, errorText)
+            null -> buildRequestData(findParentTask(task.id)!!, task, status, datetime, errorText)
+            else -> buildRequestData(task, task, status, datetime, errorText)
 
         }
 

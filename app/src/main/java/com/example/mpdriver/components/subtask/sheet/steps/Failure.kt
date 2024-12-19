@@ -87,6 +87,9 @@ fun FailureStep(
     var failureDesk by remember {
         mutableStateOf("")
     }
+    var isLoading by remember {
+        mutableStateOf(false)
+    }
 
     val now = Clock.System.now()
     var date by remember {
@@ -160,6 +163,7 @@ fun FailureStep(
         Spacer(modifier = Modifier.height(20.dp))
 
         ActiveButton(onClick = {
+            isLoading = true
             apiCall(
                 FailureStepApiCallData(
                     subtaskId = subtask.id,
@@ -167,6 +171,7 @@ fun FailureStep(
                     datetime = LocalDateTime.parse("${date} ${time}:00", datetimeFormatFrom)
                 )
             )
+            isLoading = false
         }, text = "Отправить", modifier = Modifier.fillMaxWidth())
     }
 }
