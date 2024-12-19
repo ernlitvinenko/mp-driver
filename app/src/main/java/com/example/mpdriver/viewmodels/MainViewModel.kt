@@ -2,12 +2,15 @@ package com.example.mpdriver.viewmodels
 
 import android.util.Log
 import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.State
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.MutableLiveData
+import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.map
 import com.example.mpdriver.data.models.AppEventKinds
 import com.example.mpdriver.data.models.AppTask
 import com.example.mpdriver.data.models.EventParameters
@@ -25,24 +28,24 @@ class MainViewModel : BaseViewModel() {
     val tasks: MutableLiveData<List<AppTask>> by lazy {
         MutableLiveData<List<AppTask>>()
     }
-
-    val plannedTasks: List<AppTask>
-        get() = if (tasks.value != null) tasks.value!!.filter { it.status == TaskStatus.NOT_DEFINED } else emptyList()
-
-    val completedTasks: List<AppTask>
-        get() = if (tasks.value != null) tasks.value!!.filter { it.status == TaskStatus.COMPLETED } else emptyList()
-
-    val activeTask: AppTask?
-        get() {
-            if (tasks.value != null) {
-                return try {
-                    tasks.value!!.filter { it.status == TaskStatus.IN_PROGRESS }.first()
-                } catch (_: NoSuchElementException) {
-                    null
-                }
-            }
-            return null
+    val plannedTasksLiveData = tasks.map {
+        it.filter { task ->
+            task.status == TaskStatus.NOT_DEFINED
         }
+    }
+
+    val completedTaskLiveData = tasks.map {
+        it.filter { task ->
+            task.status == TaskStatus.COMPLETED
+        }
+    }
+
+    val activeTaskLiveData = tasks.map {
+        it.find { task ->
+            task.status == TaskStatus.IN_PROGRESS
+        }
+    }
+
 
     suspend fun isAuthorized(): Boolean {
         fetchTaskData()

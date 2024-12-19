@@ -11,6 +11,7 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -65,16 +66,20 @@ fun Feed(
         byUnicodePattern("dd.MM.yyyy")
     }
 
+    val  plannedTasks = model.plannedTasksLiveData.observeAsState(emptyList())
+    val completedTasks = model.completedTaskLiveData.observeAsState(emptyList())
+    val activeTask = model.activeTaskLiveData.observeAsState()
+
 
     val dataList = listOf(
         FeedDataListProps(
             title = "Запланированные задачи",
-            count = model.plannedTasks.count(),
-            date = when (model.plannedTasks.count()) {
+            count = plannedTasks.value.count() ?: 0,
+            date = when (plannedTasks.value.count()) {
                 0 -> "-"
                 else -> dateFormat.format(
                     LocalDateTime.parse(
-                        model.plannedTasks[0].startPln,
+                        plannedTasks.value[0].startPln,
                         datetimeFormatFrom
                     )
                 )
@@ -84,12 +89,12 @@ fun Feed(
         ),
         FeedDataListProps(
             title = "Завершенные задачи",
-            count = model.completedTasks.count(),
-            when (model.completedTasks.count()) {
+            count = completedTasks.value.count() ?: 0,
+            when (completedTasks.value.count()) {
                 0 -> "-"
                 else -> dateFormat.format(
                     LocalDateTime.parse(
-                        model.completedTasks[0].startPln,
+                        completedTasks.value[0].startPln,
                         datetimeFormatFrom
                     )
                 )
@@ -118,7 +123,7 @@ fun Feed(
 
     Layout(dataList = dataList, header = {
         Column {
-            ActiveTask(activeTask = model.activeTask, navigateToTask = {navigateToTask(it)}, apiCalls = object : ApiCalls {
+            ActiveTask(activeTask = activeTask.value, navigateToTask = {navigateToTask(it)}, apiCalls = object : ApiCalls {
                 override fun success(data: SuccessStepApiCallData) {
                     coroutineScope.launch {
                         model.changeTask(data.subtaskId, TaskStatus.COMPLETED, datetime = data.dateTime)

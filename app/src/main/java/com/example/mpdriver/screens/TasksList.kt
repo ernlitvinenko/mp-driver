@@ -21,6 +21,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -31,8 +32,13 @@ import com.example.mpdriver.components.HeaderTabs
 import com.example.mpdriver.components.HeaderTabsData
 import com.example.mpdriver.components.Layout
 import com.example.mpdriver.components.TaskComponent
+import com.example.mpdriver.data.models.TaskStatus
 import com.example.mpdriver.variables.JDEColor
 import com.example.mpdriver.viewmodels.MainViewModel
+import kotlinx.coroutines.launch
+import kotlinx.datetime.Clock
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.toLocalDateTime
 
 
 private enum class ActiveTab {
@@ -50,12 +56,15 @@ fun TasksList(modifier: Modifier = Modifier, mainViewModel: MainViewModel = view
         mutableStateOf(ActiveTab.PLANNED)
     }
 
-    val tasks = mainViewModel.tasks.observeAsState(emptyList())
-
 
     LaunchedEffect(activeTab) {
         isLoading = false
     }
+
+    val plannedTasks = mainViewModel.plannedTasksLiveData.observeAsState(emptyList())
+    val completedTasks = mainViewModel.completedTaskLiveData.observeAsState(emptyList())
+    val activeTask = mainViewModel.activeTaskLiveData.observeAsState()
+    val coroutineScope = rememberCoroutineScope()
 
 
     if (isLoading) {
@@ -68,9 +77,9 @@ fun TasksList(modifier: Modifier = Modifier, mainViewModel: MainViewModel = view
         }
         return
     }
-    Layout(dataList = when(activeTab) {
-        ActiveTab.PLANNED -> mainViewModel.plannedTasks
-        ActiveTab.COMPLETED -> mainViewModel.completedTasks
+    Layout(dataList = when (activeTab) {
+        ActiveTab.PLANNED -> plannedTasks.value
+        ActiveTab.COMPLETED -> completedTasks.value
     }, header = {
         HeaderTabs(
             tabsData = listOf(
@@ -95,10 +104,23 @@ fun TasksList(modifier: Modifier = Modifier, mainViewModel: MainViewModel = view
                     ),
                     shape = RoundedCornerShape(10.dp),
                     modifier = Modifier.fillMaxWidth(),
-                    onClick = { /* TODO  Complete it */ }
+                    onClick = {
+                        coroutineScope.launch {
+                            mainViewModel.changeTask(
+                                it,
+                                TaskStatus.IN_PROGRESS,
+                                datetime = Clock.System.now().toLocalDateTime(
+                                    TimeZone.currentSystemDefault()
+                                )
+                            )
+                            mainViewModel.fetchTaskData()
+                        }
+                    },
+                    enabled = activeTask.value == null
                 ) {
                     Text(text = "Приступить к выполнению")
                 }
+
                 else -> {}
             }
         }
