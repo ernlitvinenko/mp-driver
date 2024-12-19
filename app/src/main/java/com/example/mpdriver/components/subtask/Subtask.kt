@@ -28,6 +28,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.mpdriver.R
+import com.example.mpdriver.components.CardComponent
 import com.example.mpdriver.components.InformationPlaceholderSmall
 import com.example.mpdriver.components.IteractionButton
 import com.example.mpdriver.components.TaskColor
@@ -124,23 +125,18 @@ fun Subtask(
         TaskStatus.NOT_DEFINED -> if (isDelay) TaskColor.DANGER else TaskColor.DEFAULT
     }
 
+    val statusColor = when (status) {
+        TaskColor.DEFAULT -> JDEColor.SECONDARY
+        TaskColor.SUCCESS -> JDEColor.SUCCESS
+        TaskColor.DANGER -> JDEColor.PRIMARY
+        TaskColor.WARNING -> JDEColor.WARNING
+    }
+
 
     IteractionButton(onClick = {
         isActionVisible = true
     }) {
-        Column(
-            modifier
-                .border(
-                    2.dp, when (status) {
-                        TaskColor.DEFAULT -> Color.Gray
-                        TaskColor.SUCCESS -> JDEColor.SUCCESS.color
-                        TaskColor.DANGER -> JDEColor.PRIMARY.color
-                        TaskColor.WARNING -> JDEColor.WARNING.color
-                    }, RoundedCornerShape(10.dp)
-                )
-                .fillMaxWidth()
-                .padding(horizontal = 15.dp, vertical = 15.dp)
-        ) {
+        CardComponent(modifier, statusColor) {
             Row(
                 Modifier
                     .fillMaxWidth()
@@ -238,7 +234,7 @@ fun Subtask(
                 Row(
                     Modifier
                         .fillMaxWidth()
-                        .border(1.dp, Color.Gray, RoundedCornerShape(10.dp))
+                        .border(1.dp, statusColor.color, RoundedCornerShape(10.dp))
                         .padding(vertical = 10.dp),
                     horizontalArrangement = Arrangement.Center,
                     verticalAlignment = Alignment.CenterVertically

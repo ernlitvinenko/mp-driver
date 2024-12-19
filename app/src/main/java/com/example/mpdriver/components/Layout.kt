@@ -12,9 +12,12 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonColors
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
@@ -98,6 +101,10 @@ fun HomeScreenLayout(
                     .fillMaxWidth()
                     .padding(horizontal = 16.dp)
                     .padding(bottom = 16.dp)) {
+                Button(onClick = { exitAccountAction() }, Modifier.fillMaxWidth(), colors = ButtonDefaults.buttonColors(contentColor = JDEColor.BLACK.color, containerColor = Color.Transparent), border = BorderStroke(1.dp, JDEColor.BLACK.color), shape = RoundedCornerShape(10.dp)) {
+                    Text(text = "Проверить наличие обновлений", fontWeight = FontWeight.Bold)
+                }
+                HorizontalDivider(Modifier.padding(vertical = 10.dp))
                 OutlinedButton(onClick = { exitAccountAction() }, Modifier.fillMaxWidth(), colors = ButtonDefaults.buttonColors(contentColor = JDEColor.PRIMARY.color, containerColor = Color.Transparent), border = BorderStroke(1.dp, JDEColor.PRIMARY.color)) {
                     Text(text = "Выйти из аккаунта", fontWeight = FontWeight.Bold)
                 }

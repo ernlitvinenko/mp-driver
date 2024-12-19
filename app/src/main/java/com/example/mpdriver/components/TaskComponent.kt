@@ -123,18 +123,13 @@ fun TaskComponent(
     }
 
 
-    return Column(
-        modifier
-            .border(
-                2.dp, when (status) {
-                    TaskColor.DEFAULT -> JDEColor.SECONDARY.color
-                    TaskColor.SUCCESS -> JDEColor.SUCCESS.color
-                    TaskColor.DANGER -> JDEColor.PRIMARY.color
-                    TaskColor.WARNING -> JDEColor.WARNING.color
-                }, RoundedCornerShape(10.dp)
-            )
-            .fillMaxWidth()
-            .padding(horizontal = 15.dp, vertical = 15.dp)
+    return CardComponent(
+        modifier, when (status) {
+            TaskColor.DEFAULT -> JDEColor.SECONDARY
+            TaskColor.SUCCESS -> JDEColor.SUCCESS
+            TaskColor.DANGER -> JDEColor.PRIMARY
+            TaskColor.WARNING -> JDEColor.WARNING
+        }
     ) {
         Row(
             Modifier
