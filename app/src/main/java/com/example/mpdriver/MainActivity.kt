@@ -25,14 +25,17 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import com.example.mpdriver.components.EventComponent
 import com.example.mpdriver.components.Footer
 import com.example.mpdriver.components.Header
 import com.example.mpdriver.components.HomeScreenLayout
+import com.example.mpdriver.components.PersonalEvent
 import com.example.mpdriver.recievers.TimeTickReciever
 import com.example.mpdriver.screens.Feed
 import com.example.mpdriver.screens.MapScreen
@@ -170,7 +173,9 @@ fun Navigator(
         }
         composable(Routes.Home.Events.route) {
             HomeScreenLayout(navigateUp = { navigateUp() }, navigateTo = { navigateTo(it) }) {
-                Text(text = "События")
+                Column(Modifier.padding(horizontal = 10.dp)) {
+                    EventComponent(eventType = PersonalEvent.REPAIR)
+                }
             }
         }
         composable(Routes.Home.Notifications.route) {
