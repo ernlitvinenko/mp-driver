@@ -1,6 +1,5 @@
 package com.example.mpdriver.variables
 
-import androidx.navigation.NavArgument
 import androidx.navigation.NavBackStackEntry
 import androidx.navigation.NavType
 import androidx.navigation.navArgument
@@ -14,10 +13,6 @@ open class Route(private vararg val routes: String) {
 }
 
 
-data class NavArgumentType(
-    val name: String,
-    val type: NavType<*>
-)
 
 
 sealed class Routes(val route: String) {

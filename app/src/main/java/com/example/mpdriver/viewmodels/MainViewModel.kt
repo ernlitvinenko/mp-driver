@@ -17,7 +17,6 @@ import kotlinx.datetime.TimeZone
 import kotlinx.datetime.format
 import kotlinx.datetime.toLocalDateTime
 import retrofit2.HttpException
-import retrofit2.http.Body
 
 
 class MainViewModel : BaseViewModel() {
@@ -140,7 +139,7 @@ class MainViewModel : BaseViewModel() {
     }
 
 
-    private fun grabNextSubtask(parent: AppTask, current: AppTask): AppTask? {
+    private fun grabNextSubtask(parent: AppTask, current: AppTask): AppTask {
         val currentIndex = parent.subtasks?.indexOfFirst { current.id == it.id }!!
         return parent.subtasks[currentIndex + 1]
     }
@@ -193,7 +192,7 @@ class MainViewModel : BaseViewModel() {
                         datetime
                     ),
                     buildRequestSchemeItem(
-                        grabNextSubtask(parent, current)!!.id,
+                        grabNextSubtask(parent, current).id,
                         EventParameters.NewTaskStatus.InProgress,
                         datetime
                     ),
@@ -237,7 +236,7 @@ class MainViewModel : BaseViewModel() {
                         errorText
                     ),
                     buildRequestSchemeItem(
-                        grabNextSubtask(parent, current)!!.id,
+                        grabNextSubtask(parent, current).id,
                         EventParameters.NewTaskStatus.InProgress,
                         datetime
                     )
