@@ -1,33 +1,39 @@
 package com.example.mpdriver.viewmodels
 
 import android.util.Log
-import androidx.compose.runtime.MutableState
-import androidx.compose.runtime.State
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateListOf
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
 import androidx.lifecycle.MutableLiveData
-import androidx.lifecycle.Observer
-import androidx.lifecycle.ViewModel
 import androidx.lifecycle.map
 import com.example.mpdriver.data.models.AppEventKinds
+import com.example.mpdriver.data.models.AppEventResponse
+import com.example.mpdriver.data.models.AppNote
 import com.example.mpdriver.data.models.AppTask
 import com.example.mpdriver.data.models.EventParameters
 import com.example.mpdriver.data.models.MpdSetAppEventsRequest
 import com.example.mpdriver.data.models.TaskStatus
 import com.example.mpdriver.variables.datetimeFormatFrom
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
+import kotlinx.datetime.Clock
 import kotlinx.datetime.LocalDateTime
+import kotlinx.datetime.TimeZone
 import kotlinx.datetime.format
+import kotlinx.datetime.toLocalDateTime
 import retrofit2.HttpException
+import retrofit2.http.Body
+
 
 class MainViewModel : BaseViewModel() {
 
     val tasks: MutableLiveData<List<AppTask>> by lazy {
         MutableLiveData<List<AppTask>>()
     }
+
+    val events: MutableLiveData<List<AppEventResponse>?> by lazy {
+        MutableLiveData()
+    }
+
+    val notes: MutableLiveData<List<AppNote>?> by lazy {
+        MutableLiveData()
+    }
+
     val plannedTasksLiveData = tasks.map {
         it.filter { task ->
             task.status == TaskStatus.NOT_DEFINED
@@ -54,8 +60,15 @@ class MainViewModel : BaseViewModel() {
 
     suspend fun fetchTaskData() {
         try {
-            val tasksData = api.getTasks(generateSessionHeader())
+            val tasksData = api.getTasks(
+                generateSessionHeader(), Clock.System.now().toLocalDateTime(
+                    TimeZone.currentSystemDefault()
+                ).format(datetimeFormatFrom)
+            )
+            Log.d("fetchTaskData", "fetchTaskData: ${tasksData.appTasks}")
             tasks.value = tasksData.appTasks
+            events.value = tasksData.events
+            notes.value = tasksData.notes
         } catch (e: HttpException) {
             Log.e("fetchTaskData", "Error on fetching tasks: ${e.message}")
             Log.e("fetchTaskData", "Status code: ${e.code()}")
@@ -63,6 +76,30 @@ class MainViewModel : BaseViewModel() {
             when (e.code()) {
                 401 -> dropAccessToken()
             }
+        }
+    }
+
+    suspend fun addEvent(
+        task: AppTask? = null,
+        datetime: LocalDateTime? = null,
+        eventData: Map<String, String>
+    ) {
+        try {
+            api.createEvent(
+                generateSessionHeader(),
+                listOf(
+                    MpdSetAppEventsRequest(
+                        task?.id?.toString(),
+                        kind = AppEventKinds.CreateUserEvent,
+                        eventData = listOf( eventData),
+                        dateTime = datetime?.format(datetimeFormatFrom)
+                            ?: Clock.System.now().toLocalDateTime(
+                                TimeZone.currentSystemDefault()).format(datetimeFormatFrom)
+                    )
+                )
+            )
+        } catch (e: HttpException) {
+            Log.w("AddEventException", "addEvent: ${e.message()}\nStatus Code: ${e.code()}}", )
         }
     }
 
@@ -247,10 +284,16 @@ class MainViewModel : BaseViewModel() {
 
         api.createEvent(generateSessionHeader(), requestData)
     }
-    suspend fun changeTask(taskId: Long, status: TaskStatus, datetime: LocalDateTime, errorText: String? = null) {
-        val task = tasks.value?.find { it.id == taskId} ?: tasks.value?.map { t ->
+
+    suspend fun changeTask(
+        taskId: Long,
+        status: TaskStatus,
+        datetime: LocalDateTime,
+        errorText: String? = null
+    ) {
+        val task = tasks.value?.find { it.id == taskId } ?: tasks.value?.map { t ->
             t.subtasks
-        }?.reduce {acc, appTasks ->
+        }?.reduce { acc, appTasks ->
             acc!! + appTasks!!
         }?.find { sbt -> sbt.id == taskId }
         changeTask(task!!, status, datetime, errorText)

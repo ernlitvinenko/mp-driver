@@ -9,8 +9,10 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -24,6 +26,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -35,10 +38,14 @@ import com.example.mpdriver.components.EventComponent
 import com.example.mpdriver.components.Footer
 import com.example.mpdriver.components.Header
 import com.example.mpdriver.components.HomeScreenLayout
+import com.example.mpdriver.components.InDevelopmentComponent
 import com.example.mpdriver.components.PersonalEvent
 import com.example.mpdriver.recievers.TimeTickReciever
+import com.example.mpdriver.screens.AddEventScreen
 import com.example.mpdriver.screens.Feed
+import com.example.mpdriver.screens.ListEventsScreen
 import com.example.mpdriver.screens.MapScreen
+import com.example.mpdriver.screens.NoteScreen
 import com.example.mpdriver.screens.PhoneCodeInputScreen
 import com.example.mpdriver.screens.PhoneInputScreen
 import com.example.mpdriver.screens.SubtaskAndEventsTab
@@ -167,20 +174,37 @@ fun Navigator(
             }
         }
         composable(Routes.Home.Chat.route) {
-            HomeScreenLayout(navigateUp = { navigateUp() }, navigateTo = { navigateTo(it) }) {
-                Text(text = "Чат")
+            HomeScreenLayout(navigateUp = { navigateUp() },
+                navigateTo = { navigateTo(it) },
+                title = "Чат") {
+                Column(Modifier.fillMaxWidth().fillMaxHeight(), verticalArrangement = Arrangement.Center) {
+                    InDevelopmentComponent {
+                        navigateTo(Routes.Home.Feed)
+                    }
+                }
+
             }
         }
         composable(Routes.Home.Events.route) {
-            HomeScreenLayout(navigateUp = { navigateUp() }, navigateTo = { navigateTo(it) }) {
-                Column(Modifier.padding(horizontal = 10.dp)) {
-                    EventComponent(eventType = PersonalEvent.REPAIR)
+            HomeScreenLayout(navigateUp = { navigateUp() }, navigateTo = { navigateTo(it) },
+                title = "События"
+                ) {
+               ListEventsScreen(model = mainViewModel, navigateTo = {navigateTo(it)})
+            }
+        }
+
+        composable(Routes.Home.Events.Add.route) {
+            HomeScreenLayout(navigateUp = { navigateUp()}, navigateTo = {navigateTo(it)},
+                title = "Добавить событие", backlink = true) {
+                AddEventScreen {
+                    navigateTo(it)
                 }
             }
         }
+
         composable(Routes.Home.Notifications.route) {
-            HomeScreenLayout(navigateUp = { navigateUp() }, navigateTo = { navigateTo(it) }) {
-                Text(text = "Уведомления")
+            HomeScreenLayout(navigateUp = { navigateUp() }, navigateTo = { navigateTo(it) }, title = "Уведомления") {
+                NoteScreen()
             }
         }
         composable(Routes.Home.Tasks.route) {
@@ -206,9 +230,11 @@ fun Navigator(
         }
 
         composable(Routes.Home.Map.route) {
-            HomeScreenLayout(navigateUp = { navigateUp() },
+            HomeScreenLayout(
+                navigateUp = { navigateUp() },
                 navigateTo = { navigateTo(it) },
-                title = "Карта") {
+                title = "Карта"
+            ) {
                 MapScreen()
             }
         }

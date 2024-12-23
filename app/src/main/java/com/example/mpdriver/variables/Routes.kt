@@ -27,7 +27,9 @@ sealed class Routes(val route: String) {
 
     data object Home : Route("home") {
         data object Feed : Route(Home, "feed")
-        data object Events : Route(Home, "events")
+        data object Events : Route(Home, "events") {
+            data object Add: Route (Events, "add")
+        }
         data object Notifications : Route(Home, "notifications")
         data object Chat : Route(Home, "chat")
         data object Tasks : Route(Home, "tasks") {

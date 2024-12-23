@@ -86,7 +86,8 @@ data class AppTask(
 
 data class GetMPD_APP_TASK_RESPONSE(
     @SerializedName("app_tasks") val appTasks: List<AppTask>?,
-    @SerializedName("events") val events: List<AppEventResponse>?
+    @SerializedName("global_events") val events: List<AppEventResponse>?,
+    @SerializedName("global_notes") val notes: List<AppNote>?
 )
 
 
@@ -105,7 +106,18 @@ data class AppEventResponse(
     val id: Long,
     val type: String,
     val text: String?,
-    val eventDatetime: String
+    val eventDatetime: String,
+    val eventData: List<Map<String, String>>
+)
+
+data class AppNote(
+    val id: Long,
+    val idAppTask: AppTask?,
+    val status: Int,
+    val type: Int,
+    val text: String,
+    val dtCreate: String,
+    val dtChange: String
 )
 
 data class AppMarshResponse(

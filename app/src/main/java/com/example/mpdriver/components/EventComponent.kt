@@ -3,16 +3,21 @@ package com.example.mpdriver.components
 import android.util.Log
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.defaultMinSize
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.MenuDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
@@ -22,6 +27,7 @@ import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshots.SnapshotStateMap
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.onFocusEvent
@@ -132,24 +138,59 @@ sealed class PersonalEvent(val eventName: String, val fields: List<EventField>) 
             EventField.Time,
         )
     )
+
+    companion object {
+        val listOfEvents = listOf(REPAIR, LUNCH, DREAMS, ACCIDENT, FUEL)
+    }
 }
 
 @Preview(showBackground = true)
 @Composable
-fun EventComponent(modifier: Modifier = Modifier, eventType: PersonalEvent = PersonalEvent.REPAIR) {
-
-    val eventData = remember {
-        mutableStateMapOf<String, String>()
-    }
+fun EventComponent(
+    modifier: Modifier = Modifier,
+    eventType: PersonalEvent = PersonalEvent.REPAIR,
+    eventData: MutableMap<String, String> = remember {
+        mutableStateMapOf()
+    },
+    readonly: Boolean = false
+) {
 
     var activeField by remember {
         mutableStateOf<EventField?>(null)
     }
 
+
     CardComponent(modifier) {
         Text(text = eventType.eventName, fontWeight = FontWeight.Bold, fontSize = 20.sp)
         Spacer(modifier = Modifier.padding(top = 20.dp))
         eventType.fields.forEach {
+
+            if (readonly) {
+                when (it.type) {
+                    EventFieldTypes.TIME_RANGE -> {
+                        InformationPlaceholderSmall(
+                            Modifier.fillMaxWidth(),
+                            subText = it.label,
+                            mainText = "${eventData[it.name + "__from"] ?: ""} - ${eventData[it.name + "__till"] ?: ""}"
+                        )
+                    }
+                    else -> {
+                        InformationPlaceholderSmall(
+                            Modifier.fillMaxWidth(),
+                            subText = it.label,
+                            mainText = eventData[it.name]
+                                ?: ""
+                        )
+                    }
+                }
+                Spacer(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 10.dp)
+                )
+                return@forEach
+            }
+
             when (it.type) {
                 EventFieldTypes.DATE -> {
                     IteractionButton(onClick = { activeField = it }) {
@@ -162,7 +203,13 @@ fun EventComponent(modifier: Modifier = Modifier, eventType: PersonalEvent = Per
                     }
 
                     if (activeField == it) {
-                        DatePicker(modifier = Modifier.fillMaxWidth(), startDate = if(eventData[it.name] != null) LocalDate.parse(eventData[it.name], dateFormat.toJava()) else LocalDate.now()) { date ->
+                        DatePicker(
+                            modifier = Modifier.fillMaxWidth(),
+                            startDate = if (eventData[it.name] != null) LocalDate.parse(
+                                eventData[it.name],
+                                dateFormat.toJava()
+                            ) else LocalDate.now()
+                        ) { date ->
                             eventData[it.name] = date.format(dateFormat.toJava())
                         }
                     }
@@ -224,14 +271,16 @@ fun EventComponent(modifier: Modifier = Modifier, eventType: PersonalEvent = Per
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
                                 Column(Modifier.weight(1f)) {
-                                    TimePicker(modifier = Modifier) {timeFrom ->
-                                        eventData[it.name + "__from"] = timeFrom.format(timeFormat.toJava())
+                                    TimePicker(modifier = Modifier) { timeFrom ->
+                                        eventData[it.name + "__from"] =
+                                            timeFrom.format(timeFormat.toJava())
                                     }
                                 }
                                 Text(text = "-")
                                 Column(Modifier.weight(1f)) {
                                     TimePicker(modifier = Modifier) { timeTill ->
-                                        eventData[it.name + "__till"] = timeTill.format(timeFormat.toJava())
+                                        eventData[it.name + "__till"] =
+                                            timeTill.format(timeFormat.toJava())
                                     }
                                 }
                             }
@@ -244,49 +293,35 @@ fun EventComponent(modifier: Modifier = Modifier, eventType: PersonalEvent = Per
 
                 EventFieldTypes.SELECT -> {
                     it as EventFieldWithSelect
-                    IteractionButton(onClick = { activeField = it}) {
-                        InformationPlaceholderSmall(
-                            Modifier.fillMaxWidth(),
-                            subText = it.label,
-                            mainText = it.variants.firstOrNull { variant ->
-                                variant.value == eventData[it.name]
-                            }?.label ?: ""
-                        )
-                    }
-
-                    if (activeField == it) {
-                        Spacer(modifier = Modifier.height(10.dp))
-                        WheelTextPicker(
-                            Modifier.fillMaxWidth(),
-                            rowCount = it.variants.count(),
-                            size = DpSize(256.dp, 128.dp),
-                            startIndex = if (eventData[it.name] != null) it.variants.indexOfFirst { variant ->
-                                variant.value == eventData[it.name]
-                            } else 0,
-                            texts = it.variants.map { variant ->
-                                variant.label
-                            },
-                            selectorProperties = WheelPickerDefaults.selectorProperties(
-                                shape = RoundedCornerShape(
-                                    10.dp
-                                ),
-                                border = BorderStroke(1.dp, JDEColor.SECONDARY.color),
-                                color = JDEColor.BG_GRAY.color
+                    Box {
+                        IteractionButton(onClick = { activeField = it }) {
+                            InformationPlaceholderSmall(
+                                Modifier.fillMaxWidth(),
+                                subText = it.label,
+                                mainText = it.variants.firstOrNull { variant ->
+                                    variant.value == eventData[it.name]
+                                }?.label ?: ""
                             )
-                        ) { index ->
-
-                            if (index == 0) {
-                                eventData[it.name] = it.variants[index].value
+                        }
+                        if (activeField == it) {
+                            Spacer(modifier = Modifier.height(10.dp))
+                            DropdownMenu(
+                                expanded = true,
+                                onDismissRequest = { activeField = null }) {
+                                it.variants.forEach { item ->
+                                    DropdownMenuItem(
+                                        colors = MenuDefaults.itemColors(textColor = Color.Gray),
+                                        text = { Text(text = item.label) },
+                                        onClick = {
+                                            eventData[it.name] = item.value
+                                            activeField = null
+                                        })
+                                }
                             }
-                            else {
-                                eventData[it.name] = it.variants[index - 1].value
-                            }
-                            val variant = it.variants.find { variant ->
-                                variant.value == eventData[it.name]
-                            }
-                            it.variants.indexOf(variant)
                         }
                     }
+
+
                 }
 
                 EventFieldTypes.TEXT -> {
@@ -310,8 +345,8 @@ fun EventComponent(modifier: Modifier = Modifier, eventType: PersonalEvent = Per
                             focusedContainerColor = JDEColor.TEXT_FIELD_BG_COLOR.color,
                             focusedIndicatorColor = Color.Transparent,
                             unfocusedIndicatorColor = Color.Transparent,
-                            focusedTextColor = Color.Gray,
-                            unfocusedTextColor = Color.Gray,
+                            focusedTextColor = Color.Black,
+                            unfocusedTextColor = Color.Black,
                             focusedPlaceholderColor = Color.Gray,
                             unfocusedPlaceholderColor = Color.Gray
                         )
