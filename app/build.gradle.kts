@@ -28,7 +28,7 @@ android {
 
     buildTypes {
         release {
-            isMinifyEnabled = false
+            isMinifyEnabled = true
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
@@ -88,5 +88,7 @@ dependencies {
 
 
     implementation("com.github.commandiron:WheelPickerCompose:1.1.11")
+
+    implementation("com.github.javiersantos:AppUpdater:2.7")
 
 }

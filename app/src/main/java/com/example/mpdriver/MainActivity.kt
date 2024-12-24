@@ -4,6 +4,7 @@ import android.Manifest
 import android.content.Intent
 import android.content.IntentFilter
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
@@ -43,6 +44,12 @@ import com.example.mpdriver.variables.Route
 import com.example.mpdriver.variables.Routes
 import com.example.mpdriver.viewmodels.AuthViewModel
 import com.example.mpdriver.viewmodels.MainViewModel
+import com.github.javiersantos.appupdater.AppUpdater
+import com.github.javiersantos.appupdater.AppUpdaterUtils
+import com.github.javiersantos.appupdater.enums.AppUpdaterError
+import com.github.javiersantos.appupdater.enums.Display
+import com.github.javiersantos.appupdater.enums.UpdateFrom
+import com.github.javiersantos.appupdater.objects.Update
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.isGranted
 import com.google.accompanist.permissions.rememberPermissionState
@@ -52,11 +59,37 @@ import com.yandex.mapkit.MapKitFactory
 class MainActivity : ComponentActivity() {
     val timeTickReciever = TimeTickReciever()
 
+    lateinit var  appUpdater: AppUpdaterUtils
+
     @OptIn(ExperimentalPermissionsApi::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         MapKitFactory.setApiKey("f4385b18-0740-454a-a71f-d20da7e8fc3b")
         MapKitFactory.initialize(this)
+
+        appUpdater = AppUpdaterUtils(this)
+            .setUpdateFrom(UpdateFrom.JSON)
+            .setUpdateJSON("https://raw.githubusercontent.com/ernlitvinenko/mp-driver-update/refs/heads/main/update-changelog.json")
+            .withListener(object: AppUpdaterUtils.UpdateListener {
+                override fun onSuccess(update: Update?, isUpdateAvailable: Boolean?) {
+                    Log.d("Latest Version", update!!.getLatestVersion());
+                    Log.d("Latest Version Code", update.getLatestVersionCode().toString());
+                    Log.d("Release notes", update.getReleaseNotes());
+                    Log.d("URL", update.getUrlToDownload().toString());
+                    Log.d("Is update available?", isUpdateAvailable.toString());
+                }
+
+                override fun onFailed(error: AppUpdaterError?) {
+                    Log.d("AppUpdater Error", "Something went wrong");
+                }
+
+            })
+
+//        App updater
+
+
+        appUpdater.start()
+
         registerReceiver(timeTickReciever, IntentFilter(Intent.ACTION_TIME_TICK))
 //        val pingWorkManager = PeriodicWorkRequestBuilder<PingServiceWorker>(15, TimeUnit.SECONDS).build()
 
@@ -88,6 +121,7 @@ class MainActivity : ComponentActivity() {
 
     override fun onDestroy() {
         super.onDestroy()
+        appUpdater.stop()
         unregisterReceiver(timeTickReciever)
     }
 

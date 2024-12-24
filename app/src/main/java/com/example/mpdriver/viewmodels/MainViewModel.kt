@@ -17,6 +17,7 @@ import kotlinx.datetime.TimeZone
 import kotlinx.datetime.format
 import kotlinx.datetime.toLocalDateTime
 import retrofit2.HttpException
+import java.net.SocketTimeoutException
 
 
 class MainViewModel : BaseViewModel() {
@@ -65,9 +66,15 @@ class MainViewModel : BaseViewModel() {
                 ).format(datetimeFormatFrom)
             )
             Log.d("fetchTaskData", "fetchTaskData: ${tasksData.appTasks}")
-            tasks.value = tasksData.appTasks
-            events.value = tasksData.events
-            notes.value = tasksData.notes
+            tasksData.appTasks?.let {
+                tasks.value = it
+            }
+            tasksData.events?.let {
+                events.value = it
+            }
+            tasksData.notes?.let {
+                notes.value = it
+            }
         } catch (e: HttpException) {
             Log.e("fetchTaskData", "Error on fetching tasks: ${e.message}")
             Log.e("fetchTaskData", "Status code: ${e.code()}")
@@ -75,6 +82,9 @@ class MainViewModel : BaseViewModel() {
             when (e.code()) {
                 401 -> dropAccessToken()
             }
+        }
+        catch (e: SocketTimeoutException) {
+            Log.e("fetchTaskData", "fetchTaskData: error on fetching tasks: ${e.message}", )
         }
     }
 

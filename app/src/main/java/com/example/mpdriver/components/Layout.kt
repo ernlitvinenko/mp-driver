@@ -35,6 +35,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.example.mpdriver.variables.JDEColor
 import com.example.mpdriver.variables.Route
+import com.example.mpdriver.variables.version
 
 
 @Composable
@@ -102,7 +103,7 @@ fun HomeScreenLayout(
                     .fillMaxWidth()
                     .padding(horizontal = 16.dp)
                     .padding(bottom = 16.dp)) {
-                Text(modifier = Modifier.fillMaxWidth(), text = "Версия 0.0.1dev1", color = Color.Gray, textAlign = TextAlign.Center)
+                Text(modifier = Modifier.fillMaxWidth(), text = "Версия $version", color = Color.Gray, textAlign = TextAlign.Center)
                 Spacer(modifier = Modifier.height(10.dp))
                 Button(onClick = { exitAccountAction() }, Modifier.fillMaxWidth(), colors = ButtonDefaults.buttonColors(contentColor = JDEColor.BLACK.color, containerColor = Color.Transparent), border = BorderStroke(1.dp, JDEColor.BLACK.color), shape = RoundedCornerShape(10.dp)) {
                     Text(text = "Проверить наличие обновлений", fontWeight = FontWeight.Bold)

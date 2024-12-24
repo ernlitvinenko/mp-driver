@@ -35,8 +35,15 @@ class AuthViewModel : BaseViewModel() {
 
     suspend fun getCode(): GetPhoneCodeResponse? {
         phoneNumber.value?.let {
-            val data = api.getPhoneCode(GetPhoneCodeRequest(phoneNumber = it))
-            return data
+            try {
+                val data = api.getPhoneCode(GetPhoneCodeRequest(phoneNumber = it))
+                return data
+            }
+            catch (e: Exception) {
+                Log.e("GetSMSCodeError", "${e.message}")
+                return GetPhoneCodeResponse(code=null, status = -100)
+            }
+
         }
         return null
     }
@@ -46,11 +53,17 @@ class AuthViewModel : BaseViewModel() {
             return
         }
         val cred = Credentials.basic(phoneNumber.value!!, phoneCode.value!!)
-
-        val data = api.getToken(cred)
-        data.accessToken.forEach {
-            setAccessTokenHandler(it)
+        try {
+            val data = api.getToken(cred)
+            data.accessToken.forEach {
+                setAccessTokenHandler(it)
+            }
         }
+        catch (e: Exception) {
+            Log.e("Enter SMS Code", "${e.message}")
+            return
+        }
+
 
 
     }
