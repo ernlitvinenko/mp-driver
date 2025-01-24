@@ -158,14 +158,7 @@ class PhoneNumberVisualTransformation : VisualTransformation {
 
             override fun transformedToOriginal(offset: Int): Int {
                 // Remove formatting characters to map back
-                var originalOffset = offset
-                if (offset > 15) originalOffset -= 5
-                else if (offset > 12) originalOffset -= 4
-                else if (offset > 9) originalOffset -= 3
-                else if (offset > 6) originalOffset -= 2
-                else if (offset > 3) originalOffset -= 1
-                else if (offset > 1) originalOffset -= 2
-                return originalOffset
+                return if (offset > 7) offset - 7 else offset
             }
         }
         return TransformedText(AnnotatedString(formattedText), offsetMapping)

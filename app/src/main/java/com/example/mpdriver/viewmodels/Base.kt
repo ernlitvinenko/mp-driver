@@ -34,8 +34,11 @@ open class BaseViewModel: ViewModel() {
 
         if (checkDBInstance()) {
             try {
-                db!!.execSQL("""insert into preferences (id, p_key, p_val) values (1, 'access_token', '${accessToken.value}') on conflict do update set p_val=excluded.p_val""")
+                db!!.execSQL("""delete from preferences where id = 1""")
+                db!!.execSQL("""insert into preferences (id, p_key, p_val) values (1, 'access_token', '${accessToken.value}')""")
+
                 Log.i("viewModel_setAccessToken", "access_token has been inserted into preferences table")
+
                 return
             }
             catch (e: SQLException) {

@@ -6,6 +6,7 @@ import android.content.IntentFilter
 import android.os.Bundle
 import android.util.Log
 import androidx.activity.ComponentActivity
+import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -91,8 +92,8 @@ class MainActivity : ComponentActivity() {
         appUpdater.start()
 
         registerReceiver(timeTickReciever, IntentFilter(Intent.ACTION_TIME_TICK))
-//        val pingWorkManager = PeriodicWorkRequestBuilder<PingServiceWorker>(15, TimeUnit.SECONDS).build()
 
+//        val pingWorkManager = PeriodicWorkRequestBuilder<PingServiceWorker>(15, TimeUnit.SECONDS).build()
 //        WorkManager.getInstance(this).enqueueUniquePeriodicWork("PingServerWork", ExistingPeriodicWorkPolicy.KEEP, pingWorkManager)
 
 
@@ -172,11 +173,16 @@ fun Navigator(
 
     NavHost(navController = navController, startDestination = startDestination.route) {
         composable(Routes.Auth.route) {
+            BackHandler(enabled = true) {
+
+            }
             PhoneInputScreen(navigateTo = {
                 navigateTo(Routes.Auth.Code)
             }, viewmodel = authViewModel)
         }
         composable(Routes.Auth.Code.route) {
+            BackHandler(enabled = true) {
+            }
             PhoneCodeInputScreen(
                 authViewModel = authViewModel,
                 mainViewModel = mainViewModel,
@@ -185,7 +191,13 @@ fun Navigator(
                 })
         }
         composable(Routes.Home.Feed.route) {
-            HomeScreenLayout(navigateUp = { navigateUp() }, navigateTo = { navigateTo(it) }) {
+            BackHandler(true) {
+            }
+            HomeScreenLayout(navigateUp = { navigateUp() }, navigateTo = { navigateTo(it) }, exitAccountAction = {
+                mainViewModel.dropAccessToken()
+                authViewModel.clearAllData()
+                navigateTo(Routes.Auth)
+            }) {
                 Feed(navigateToTasks = {
                     navController.navigate(Routes.Home.Tasks.route)
                 }, model = mainViewModel, navigateToTask = {
@@ -195,10 +207,15 @@ fun Navigator(
             }
         }
         composable(Routes.Home.Chat.route) {
+            BackHandler(true) {
+            }
             HomeScreenLayout(navigateUp = { navigateUp() },
                 navigateTo = { navigateTo(it) },
                 title = "Чат") {
-                Column(Modifier.fillMaxWidth().fillMaxHeight(), verticalArrangement = Arrangement.Center) {
+                Column(
+                    Modifier
+                        .fillMaxWidth()
+                        .fillMaxHeight(), verticalArrangement = Arrangement.Center) {
                     InDevelopmentComponent {
                         navigateTo(Routes.Home.Feed)
                     }
@@ -207,6 +224,8 @@ fun Navigator(
             }
         }
         composable(Routes.Home.Events.route) {
+            BackHandler(true) {
+            }
             HomeScreenLayout(navigateUp = { navigateUp() }, navigateTo = { navigateTo(it) },
                 title = "События"
                 ) {
@@ -215,6 +234,9 @@ fun Navigator(
         }
 
         composable(Routes.Home.Events.Add.route) {
+            BackHandler(true) {
+                navigateTo(Routes.Home.Events)
+            }
             HomeScreenLayout(navigateUp = { navigateUp()}, navigateTo = {navigateTo(it)},
                 title = "Добавить событие", backlink = true) {
                 AddEventScreen {
@@ -224,11 +246,17 @@ fun Navigator(
         }
 
         composable(Routes.Home.Notifications.route) {
+            BackHandler(true) {
+
+            }
             HomeScreenLayout(navigateUp = { navigateUp() }, navigateTo = { navigateTo(it) }, title = "Уведомления") {
                 NoteScreen()
             }
         }
         composable(Routes.Home.Tasks.route) {
+            BackHandler(true) {
+                navigateTo(Routes.Home.Feed)
+            }
             HomeScreenLayout(
                 navigateUp = { navigateUp() },
                 navigateTo = { navigateTo(it) }, title = "Задачи"
@@ -240,6 +268,9 @@ fun Navigator(
             Routes.Home.Tasks.Task.route,
             arguments = Routes.Home.Tasks.Task.navArguments
         ) { stackEntry ->
+            BackHandler(enabled = true) {
+
+            }
             HomeScreenLayout(
                 navigateUp = { navigateUp() },
                 navigateTo = { navigateTo(it) },
@@ -251,6 +282,10 @@ fun Navigator(
         }
 
         composable(Routes.Home.Map.route) {
+
+            BackHandler(enabled = true) {
+
+            }
             HomeScreenLayout(
                 navigateUp = { navigateUp() },
                 navigateTo = { navigateTo(it) },

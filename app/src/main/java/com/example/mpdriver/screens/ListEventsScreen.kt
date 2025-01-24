@@ -1,6 +1,5 @@
 package com.example.mpdriver.screens
 
-import android.util.Log
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.livedata.observeAsState
@@ -19,7 +18,6 @@ fun ListEventsScreen(model: MainViewModel = viewModel(), navigateTo: (Route) -> 
 
     val events = model.events.observeAsState()
 
-    Log.d("ListEventsScreenEvents", "ListEventsScreen: ${events}")
 
     Layout(dataList = events.value ?: emptyList(), header = {
         ActiveButton(modifier = Modifier.fillMaxWidth(), onClick = {

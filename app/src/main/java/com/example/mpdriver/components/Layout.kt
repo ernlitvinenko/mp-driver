@@ -47,9 +47,18 @@ fun <T> Layout(modifier: Modifier = Modifier, header: @Composable () -> Unit = {
         item {
             header()
         }
-        items(items = dataList) {
-            itemComponent(it)
+
+        if (dataList.isEmpty()) {
+            item {
+                EmptyList(Modifier.padding(vertical = 60.dp), text = "Здесь пока пусто")
+            }
         }
+        else {
+            items(items = dataList) {
+                itemComponent(it)
+            }
+        }
+
     }
 }
 
@@ -105,7 +114,7 @@ fun HomeScreenLayout(
                     .padding(bottom = 16.dp)) {
                 Text(modifier = Modifier.fillMaxWidth(), text = "Версия $version", color = Color.Gray, textAlign = TextAlign.Center)
                 Spacer(modifier = Modifier.height(10.dp))
-                Button(onClick = { exitAccountAction() }, Modifier.fillMaxWidth(), colors = ButtonDefaults.buttonColors(contentColor = JDEColor.BLACK.color, containerColor = Color.Transparent), border = BorderStroke(1.dp, JDEColor.BLACK.color), shape = RoundedCornerShape(10.dp)) {
+                Button(onClick = {  }, Modifier.fillMaxWidth(), colors = ButtonDefaults.buttonColors(contentColor = JDEColor.BLACK.color, containerColor = Color.Transparent), border = BorderStroke(1.dp, JDEColor.BLACK.color), shape = RoundedCornerShape(10.dp)) {
                     Text(text = "Проверить наличие обновлений", fontWeight = FontWeight.Bold)
                 }
                 HorizontalDivider(Modifier.padding(vertical = 10.dp))

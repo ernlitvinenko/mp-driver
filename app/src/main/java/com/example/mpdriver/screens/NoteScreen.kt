@@ -11,7 +11,7 @@ import com.example.mpdriver.components.note.NoteComponent
 fun NoteScreen() {
 
 
-    Layout(dataList = (0..5).toMutableList()) {
+    Layout(dataList = mutableListOf<Int>()) {
         NoteComponent()
     }
 }

@@ -20,6 +20,11 @@ class AuthViewModel : BaseViewModel() {
     var phoneNumber: LiveData<String> = _phoneNumber
     var phoneCode: LiveData<String> = _phoneCode
 
+    fun clearAllData() {
+        _phoneNumber.value = ""
+        _phoneCode.value = ""
+    }
+
     fun onChangePhoneNumber(value: String) {
         _phoneNumber.value = value
     }

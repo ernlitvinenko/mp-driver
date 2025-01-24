@@ -157,6 +157,9 @@ fun SuccessStep(
 
         Spacer(modifier = Modifier.height(20.dp))
         ActiveButton(onClick = {
+
+//            TODO Запрет на установку времени выполнения задачи, если предыдущая была выполнена позже чем текущая
+
             apiCall(
                 SuccessStepApiCallData(
                     dateTime = LocalDateTime.parse("${date} ${time}:00", datetimeFormatFrom),

@@ -29,7 +29,7 @@ interface ApiService {
 }
 
 object RetrofitClient {
-    private const val BASE_URL = "http://10.2.101.188:30008/datasnapJDE/rest/TsmAPIvJ/"
+    private const val BASE_URL = "http://10.2.100.110:30033/datasnapJDE/rest/TsmAPIvJ/"
     val api: ApiService by lazy {
         val retrofit = Retrofit.Builder()
             .baseUrl(BASE_URL)

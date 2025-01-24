@@ -253,8 +253,12 @@ fun Subtask(
         }
     }
 
-    if (isActionVisible) {
-        SubtaskSheet(setStateAction = { isActionVisible = false }, subtaskData, apiCalls = apiCalls)
+    if (subtaskData.status == TaskStatus.IN_PROGRESS) {
+        if (isActionVisible) {
+            SubtaskSheet(setStateAction = { isActionVisible = false }, subtaskData, apiCalls = apiCalls)
+        }
     }
+
+
 
 }
