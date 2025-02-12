@@ -22,12 +22,16 @@ import com.example.mpdriver.components.subtask.sheet.steps.ApiCalls
 import com.example.mpdriver.data.models.AppTask
 import com.example.mpdriver.data.models.TaskStatus
 import com.example.mpdriver.variables.Routes
+import com.example.mpdriver.viewmodels.MainViewModel
 
 
 @Composable
 fun ActiveTask(activeTask: AppTask? = null,
                apiCalls: ApiCalls,
-               navigateToTask: (Long) -> Unit = {}) {
+               model: MainViewModel,
+               navigateToTask: (Long) -> Unit = {}
+
+) {
 
     Column(
         Modifier
@@ -36,7 +40,7 @@ fun ActiveTask(activeTask: AppTask? = null,
     ) {
 
         if (activeTask == null) {
-            EmptyList(Modifier.padding(vertical = 60.dp), text = "У вас нет активных задач")
+            EmptyList(Modifier.padding(vertical = 20.dp), text = "У вас нет активных задач")
             return
         }
         Text(
@@ -62,7 +66,7 @@ fun ActiveTask(activeTask: AppTask? = null,
     activeTask?.subtasks?.find { subtaskData ->
         subtaskData.status == TaskStatus.IN_PROGRESS
     }?.let {
-        Subtask(subtaskData = it, apiCalls = apiCalls)
+        Subtask(subtaskData = it, apiCalls = apiCalls, model = model)
     }
 
 

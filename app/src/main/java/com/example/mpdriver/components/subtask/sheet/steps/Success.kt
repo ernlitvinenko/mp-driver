@@ -25,6 +25,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.mpdriver.R
 import com.example.mpdriver.components.ActiveButton
 import com.example.mpdriver.components.DatePicker
@@ -34,9 +35,12 @@ import com.example.mpdriver.components.IteractionButton
 import com.example.mpdriver.components.TimePicker
 import com.example.mpdriver.components.rememberDateTimePickerState
 import com.example.mpdriver.data.models.AppTask
+import com.example.mpdriver.data.models.TaskStatus
+import com.example.mpdriver.variables.JDEColor
 import com.example.mpdriver.variables.dateFormat
 import com.example.mpdriver.variables.datetimeFormatFrom
 import com.example.mpdriver.variables.timeFormat
+import com.example.mpdriver.viewmodels.MainViewModel
 import kotlinx.datetime.Clock
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone
@@ -53,7 +57,8 @@ data class SuccessStepApiCallData(
 @Composable
 fun SuccessStep(
     subtask: AppTask,
-    apiCall: (SuccessStepApiCallData) -> Unit = {}
+    model: MainViewModel,
+    apiCall: (SuccessStepApiCallData) -> Unit = {},
 ) {
 
     val now = Clock.System.now()
@@ -76,7 +81,25 @@ fun SuccessStep(
         )
     }
 
+    var isLoading by remember {
+        mutableStateOf(false)
+    }
+
+    var errorText by remember {
+        mutableStateOf("")
+    }
+
     Column {
+
+        if (errorText != "") {
+            Text(
+                text = errorText,
+                color = JDEColor.PRIMARY.color,
+                fontWeight = FontWeight.Bold,
+                fontSize = 12.sp
+            )
+        }
+
         Column(
             Modifier
                 .border(
@@ -85,6 +108,8 @@ fun SuccessStep(
                 .fillMaxWidth()
                 .padding(horizontal = 15.dp, vertical = 15.dp)
         ) {
+
+
             Row(
                 Modifier
                     .fillMaxWidth()
@@ -157,16 +182,47 @@ fun SuccessStep(
 
         Spacer(modifier = Modifier.height(20.dp))
         ActiveButton(onClick = {
+//            Запрет на установку времени выполнения задачи, если предыдущая была выполнена позже чем текущая
 
-//            TODO Запрет на установку времени выполнения задачи, если предыдущая была выполнена позже чем текущая
+            val dt = LocalDateTime.parse("${date} ${time}:00", datetimeFormatFrom)
 
+            val activeTask = model.activeTaskLiveData.value
+
+            val completedTasks =
+                activeTask?.subtasks?.filter { it.status == TaskStatus.COMPLETED || it.status == TaskStatus.CANCELLED }
+
+            activeTask?.let { at ->
+                at.startFact?.let { sf ->
+                    if (dt < LocalDateTime.parse(sf, datetimeFormatFrom)) {
+                        errorText =
+                            "Некорректное время, Время начала задачи позже чем время выполнения текущей подзадачи "
+                        return@ActiveButton
+                    }
+                }
+
+            }
+
+
+            if (completedTasks != null) {
+                for (t in completedTasks) {
+                    t.endFact?.let {
+                        if (dt < LocalDateTime.parse(it, datetimeFormatFrom)) {
+                            errorText =
+                                "Некорректное время, предыдущая задача выполнена позже чем текущая"
+                            return@ActiveButton
+                        }
+                    }
+                }
+            }
+
+            isLoading = true
             apiCall(
                 SuccessStepApiCallData(
-                    dateTime = LocalDateTime.parse("${date} ${time}:00", datetimeFormatFrom),
+                    dateTime = dt,
                     subtaskId = subtask.id
                 )
             )
-        }, text = "Сохранить", modifier = Modifier.fillMaxWidth())
+        }, text = "Сохранить", modifier = Modifier.fillMaxWidth(), isLoading = isLoading)
     }
 
 

@@ -104,7 +104,7 @@ fun SubtaskScreen(taskId: Long = 0, mainViewModel: MainViewModel = viewModel(), 
                     }
                 }
             }) {
-                Subtask(subtaskData = it, apiCalls = object: ApiCalls {
+                Subtask(subtaskData = it, model = mainViewModel, apiCalls = object: ApiCalls {
                     override fun success(data: SuccessStepApiCallData) {
                         coroutineScope.launch {
                             mainViewModel.changeTask(data.subtaskId, TaskStatus.COMPLETED, data.dateTime)

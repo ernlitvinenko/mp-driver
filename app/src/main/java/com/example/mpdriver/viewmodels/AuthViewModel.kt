@@ -1,13 +1,8 @@
 package com.example.mpdriver.viewmodels
 
-import android.util.Base64
 import android.util.Log
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
-import androidx.lifecycle.ViewModel
-import androidx.navigation.NavHostController
-import com.example.mpdriver.data.api.ApiService
-import com.example.mpdriver.data.api.RetrofitClient
 import com.example.mpdriver.data.models.GetPhoneCodeRequest
 import com.example.mpdriver.data.models.GetPhoneCodeResponse
 import okhttp3.Credentials
@@ -42,6 +37,7 @@ class AuthViewModel : BaseViewModel() {
         phoneNumber.value?.let {
             try {
                 val data = api.getPhoneCode(GetPhoneCodeRequest(phoneNumber = it))
+                Log.d("GetSMSCode", "getCode: ${data}")
                 return data
             }
             catch (e: Exception) {
@@ -50,6 +46,7 @@ class AuthViewModel : BaseViewModel() {
             }
 
         }
+        Log.d("SMSCODEERROR", "phone_number: ${phoneNumber.value}")
         return null
     }
 

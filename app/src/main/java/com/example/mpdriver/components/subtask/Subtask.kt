@@ -1,9 +1,11 @@
 package com.example.mpdriver.components.subtask
 
+import android.content.Intent
+import android.content.pm.PackageManager
+import android.net.Uri
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -22,11 +24,12 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.content.ContextCompat.startActivity
 import com.example.mpdriver.R
 import com.example.mpdriver.components.CardComponent
 import com.example.mpdriver.components.InformationPlaceholderSmall
@@ -34,7 +37,6 @@ import com.example.mpdriver.components.IteractionButton
 import com.example.mpdriver.components.TaskColor
 import com.example.mpdriver.components.subtask.sheet.SubtaskSheet
 import com.example.mpdriver.components.subtask.sheet.steps.ApiCalls
-import com.example.mpdriver.components.subtask.sheet.steps.SuccessStepApiCallData
 import com.example.mpdriver.data.models.AppLocationResponse
 import com.example.mpdriver.data.models.AppMarshResponse
 import com.example.mpdriver.data.models.AppMstResponse
@@ -48,6 +50,7 @@ import com.example.mpdriver.variables.JDEColor
 import com.example.mpdriver.variables.dateFormat
 import com.example.mpdriver.variables.datetimeFormatFrom
 import com.example.mpdriver.variables.timeFormat
+import com.example.mpdriver.viewmodels.MainViewModel
 import kotlinx.datetime.Clock
 import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.LocalDateTime
@@ -88,9 +91,12 @@ fun Subtask(
             location = AppLocationResponse(lat = 55.48954f, lon = 37.75279f)
         )
     ),
+    model: MainViewModel,
     footerButton: @Composable () -> Unit = {}
 ) {
 
+
+    val context = LocalContext.current
     var isActionVisible by remember {
         mutableStateOf(false)
     }
@@ -225,7 +231,20 @@ fun Subtask(
             }
 
             TextButton(
-                onClick = { /*TODO*/ },
+                onClick = {
+                    var intent = Intent(Intent.ACTION_VIEW, Uri.parse("yandexnavi://build_route_on_map?lat_to=${subtaskData.station?.location?.lat}&lon_to=${subtaskData.station?.location?.lon}"))
+                    intent.setPackage("ru.yandex.yandexnavi")
+                    val pm: PackageManager = context.packageManager
+                    val infos = pm.queryIntentActivities(intent, 0)
+
+                    if (infos.size == 0) {
+                        // Если нет - будем открывать страничку Навигатора в Google Play
+                        intent = Intent(Intent.ACTION_VIEW, Uri.parse("market://details?id=ru.yandex.yandexnavi"));
+                        context.startActivity(intent)
+                    } else {
+                        context.startActivity(intent);
+                    }
+                },
                 colors = ButtonDefaults.buttonColors(
                     contentColor = Color.Black,
                     containerColor = Color.Transparent
@@ -255,7 +274,7 @@ fun Subtask(
 
     if (subtaskData.status == TaskStatus.IN_PROGRESS) {
         if (isActionVisible) {
-            SubtaskSheet(setStateAction = { isActionVisible = false }, subtaskData, apiCalls = apiCalls)
+            SubtaskSheet(setStateAction = { isActionVisible = false }, subtaskData, apiCalls = apiCalls, model = model)
         }
     }
 

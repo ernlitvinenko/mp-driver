@@ -163,6 +163,7 @@ fun FailureStep(
         Spacer(modifier = Modifier.height(20.dp))
 
         ActiveButton(onClick = {
+
             isLoading = true
             apiCall(
                 FailureStepApiCallData(
@@ -171,7 +172,6 @@ fun FailureStep(
                     datetime = LocalDateTime.parse("${date} ${time}:00", datetimeFormatFrom)
                 )
             )
-            isLoading = false
-        }, text = "Отправить", modifier = Modifier.fillMaxWidth())
+        }, text = "Отправить", modifier = Modifier.fillMaxWidth(), isLoading = isLoading)
     }
 }

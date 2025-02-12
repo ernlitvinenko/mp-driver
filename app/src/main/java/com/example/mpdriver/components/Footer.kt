@@ -13,6 +13,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -22,12 +23,15 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import com.example.mpdriver.R
 import com.example.mpdriver.variables.Route
 import com.example.mpdriver.variables.Routes
+import com.example.mpdriver.viewmodels.MainViewModel
 
 
 private data class FooterNavMenuLabel(
@@ -42,9 +46,11 @@ private data class FooterLinkData(
     val label: FooterNavMenuLabel
 )
 
+@Preview(showBackground = true)
 @Composable
 fun Footer(
     modifier: Modifier = Modifier,
+    model: MainViewModel = viewModel(),
     navigateTo: (Route) -> Unit = {}
 ) {
 
@@ -71,9 +77,7 @@ fun Footer(
         )
     )
 
-    var activeRoute by remember {
-        mutableStateOf<Route>(Routes.Home.Feed)
-    }
+    val activeRoute = model.activeRoute.observeAsState(Routes.Home.Feed)
 
     Row(
         modifier = modifier
@@ -87,14 +91,14 @@ fun Footer(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(vertical = 40.dp),
+                .padding(vertical = 10.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
             menuItems.forEach {
                 TextButton(
                     onClick = {
-                        activeRoute = it.link
+                        model.setActiveRoute(it.link)
                         navigateTo(it.link)
                     },
                     colors = ButtonDefaults.textButtonColors(
@@ -102,7 +106,7 @@ fun Footer(
                     )
                 ) {
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        when (activeRoute) {
+                        when (activeRoute.value) {
                             it.link -> {
                                 Image(
                                     painter = painterResource(id = it.label.imageActive),
@@ -115,7 +119,7 @@ fun Footer(
                             )
 
                         }
-                        Text(text = it.label.title, fontSize = 11.sp, color = if (activeRoute == it.link) Color.Black else Color.Gray)
+                        Text(text = it.label.title, fontSize = 11.sp, color = if (activeRoute.value == it.link) Color.Black else Color.Gray)
                     }
                 }
 

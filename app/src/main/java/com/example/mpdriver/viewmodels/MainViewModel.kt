@@ -10,6 +10,8 @@ import com.example.mpdriver.data.models.AppTask
 import com.example.mpdriver.data.models.EventParameters
 import com.example.mpdriver.data.models.MpdSetAppEventsRequest
 import com.example.mpdriver.data.models.TaskStatus
+import com.example.mpdriver.variables.Route
+import com.example.mpdriver.variables.Routes
 import com.example.mpdriver.variables.datetimeFormatFrom
 import kotlinx.datetime.Clock
 import kotlinx.datetime.LocalDateTime
@@ -32,6 +34,14 @@ class MainViewModel : BaseViewModel() {
 
     val notes: MutableLiveData<List<AppNote>?> by lazy {
         MutableLiveData()
+    }
+
+    val activeRoute: MutableLiveData<Route>  by lazy {
+        MutableLiveData(Routes.Home.Feed)
+    }
+
+    fun setActiveRoute(route: Route) {
+        activeRoute.value = route
     }
 
     val plannedTasksLiveData = tasks.map {

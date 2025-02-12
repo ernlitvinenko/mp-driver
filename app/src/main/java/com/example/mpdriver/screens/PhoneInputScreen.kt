@@ -80,13 +80,15 @@ fun PhoneInputScreen(navigateTo: () -> Unit = {}, viewmodel: AuthViewModel = vie
             color = Color.Gray
         )
         Spacer(modifier = Modifier.height(15.dp))
+        Text(text = phone.value)
         TextField(
             value = phone.value,
             isError = errorText != "",
             modifier = Modifier.fillMaxWidth(),
             onValueChange = {
                 viewmodel.onChangePhoneNumber(
-                    it.filter { char -> char.isDigit() })
+                    preformatPhoneNumber(it).filter { char -> char.isDigit() }
+                )
             },
 
             placeholder = { Text(text = "+7 (999) 999-99-99") },
@@ -125,6 +127,20 @@ fun PhoneInputScreen(navigateTo: () -> Unit = {}, viewmodel: AuthViewModel = vie
     }
 }
 
+fun preformatPhoneNumber(input: String): String {
+    val number =  when {
+        input.startsWith("+7") || input.startsWith("8") -> input
+        input.startsWith("7") -> input
+        input.startsWith("9") -> "7$input"
+        else -> input
+    }
+
+    return when (number.length) {
+        in 0..11 -> number
+        else -> number.slice(0..11)
+    }
+}
+
 fun formatPhoneNumber(digits: String): String {
     val sb = StringBuilder()
     for (i in digits.indices) {
@@ -144,21 +160,16 @@ fun formatPhoneNumber(digits: String): String {
 class PhoneNumberVisualTransformation : VisualTransformation {
     override fun filter(text: AnnotatedString): TransformedText {
         val formattedText = formatPhoneNumber(text.text.filter { it.isDigit() })
+        Log.d("Phone_visual_transformation", "filter: $formattedText")
         val offsetMapping = object : OffsetMapping {
             override fun originalToTransformed(offset: Int): Int {
                 // Account for added formatting characters
-                var transformedOffset = offset
-                if (offset >= 1) transformedOffset += 1 // "+"
-                if (offset >= 2) transformedOffset += 2 // " ("
-                if (offset >= 5) transformedOffset += 2 // ") "
-                if (offset >= 8) transformedOffset += 1 // "-"
-                if (offset >= 10) transformedOffset += 1 // "-"
-                return transformedOffset
+                return formattedText.length
             }
 
             override fun transformedToOriginal(offset: Int): Int {
                 // Remove formatting characters to map back
-                return if (offset > 7) offset - 7 else offset
+                return text.text.filter { it.isDigit() }.length
             }
         }
         return TransformedText(AnnotatedString(formattedText), offsetMapping)

@@ -5,10 +5,12 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.example.mpdriver.data.models.AppTask
+import com.example.mpdriver.viewmodels.MainViewModel
 
 
 sealed class ActionRoutes(val route: String) {
@@ -23,7 +25,7 @@ interface ApiCalls {
 }
 
 @Composable
-fun Navigator(subtask: AppTask, apiCalls: ApiCalls, onRouteChange: (ActionRoutes) -> Unit) {
+fun Navigator(subtask: AppTask, apiCalls: ApiCalls, model: MainViewModel, onRouteChange: (ActionRoutes) -> Unit) {
     val controller = rememberNavController()
 
     var currentRoute by remember {
@@ -40,7 +42,7 @@ fun Navigator(subtask: AppTask, apiCalls: ApiCalls, onRouteChange: (ActionRoutes
         composable(ActionRoutes.Success.route) {
             currentRoute = ActionRoutes.Success
             onRouteChange(currentRoute)
-            SuccessStep(subtask = subtask) {
+            SuccessStep(subtask = subtask, model) {
                 apiCalls.success(it)
             }
         }

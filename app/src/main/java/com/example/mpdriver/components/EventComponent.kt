@@ -33,7 +33,15 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.mpdriver.variables.JDEColor
 import com.example.mpdriver.variables.dateFormat
+import com.example.mpdriver.variables.datetimeFormatFrom
 import com.example.mpdriver.variables.timeFormat
+import kotlinx.datetime.Clock
+import kotlinx.datetime.LocalDateTime
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.toJavaLocalDate
+import kotlinx.datetime.toJavaLocalDateTime
+import kotlinx.datetime.toKotlinLocalDate
+import kotlinx.datetime.toLocalDateTime
 import java.time.LocalDate
 
 enum class EventFieldTypes {
@@ -141,15 +149,22 @@ fun EventComponent(
     eventData: MutableMap<String, String> = remember {
         mutableStateMapOf()
     },
-    readonly: Boolean = false
+    readonly: Boolean = false,
+    setError: (Boolean) -> Unit = {}
 ) {
 
     var activeField by remember {
         mutableStateOf<EventField?>(null)
     }
 
+    var errorText by remember {
+        mutableStateOf("")
+    }
 
+
+    val now = Clock.System.now()
     CardComponent(modifier) {
+        Text(text = errorText, fontWeight = FontWeight.Bold, fontSize = 20.sp, color = JDEColor.PRIMARY.color)
         Text(text = eventType.eventName, fontWeight = FontWeight.Bold, fontSize = 20.sp)
         Spacer(modifier = Modifier.padding(top = 20.dp))
         eventType.fields.forEach {
@@ -163,6 +178,7 @@ fun EventComponent(
                             mainText = "${eventData[it.name + "__from"] ?: ""} - ${eventData[it.name + "__till"] ?: ""}"
                         )
                     }
+
                     else -> {
                         InformationPlaceholderSmall(
                             Modifier.fillMaxWidth(),
@@ -179,6 +195,7 @@ fun EventComponent(
                 )
                 return@forEach
             }
+
 
             when (it.type) {
                 EventFieldTypes.DATE -> {
@@ -198,8 +215,24 @@ fun EventComponent(
                                 eventData[it.name],
                                 dateFormat.toJava()
                             ) else LocalDate.now()
+
                         ) { date ->
-                            eventData[it.name] = date.format(dateFormat.toJava())
+                            val formattedDate = date.format(dateFormat.toJava())
+                            eventData[it.name] = formattedDate
+                            if (date.until(
+                                now.toLocalDateTime(timeZone = TimeZone.currentSystemDefault())
+                                    .toJavaLocalDateTime().toLocalDate()
+                            ).isNegative) {
+                                errorText = "Дата события должна быть раньше чем текущая"
+                                setError(true)
+                                eventData[it.name] = formattedDate
+
+                                return@DatePicker
+                            }
+                            setError(false)
+                            errorText = ""
+
+
                         }
                     }
 

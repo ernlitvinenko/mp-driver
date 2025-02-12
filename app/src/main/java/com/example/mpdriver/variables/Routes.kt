@@ -28,6 +28,10 @@ sealed class Routes(val route: String) {
         data object Notifications : Route(Home, "notifications")
         data object Chat : Route(Home, "chat")
         data object Tasks : Route(Home, "tasks") {
+
+            data object Planned: Route(Tasks, "planned")
+            data object Closed: Route(Tasks, "closed")
+
             data object Task : Route(Tasks, "{taskId}") {
                 val navArguments = listOf(navArgument("taskId") {
                     type = NavType.LongType

@@ -41,19 +41,21 @@ import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 
 
-private enum class ActiveTab {
+enum class ActiveTab {
     PLANNED,
     COMPLETED
 }
 
 @Composable
-fun TasksList(modifier: Modifier = Modifier, mainViewModel: MainViewModel = viewModel()) {
+fun TasksList(modifier: Modifier = Modifier,
+              mainViewModel: MainViewModel = viewModel(),
+              activeTabDefault: ActiveTab = ActiveTab.PLANNED) {
     var isLoading by remember {
         mutableStateOf(true)
     }
 
     var activeTab by remember {
-        mutableStateOf(ActiveTab.PLANNED)
+        mutableStateOf(activeTabDefault)
     }
 
 

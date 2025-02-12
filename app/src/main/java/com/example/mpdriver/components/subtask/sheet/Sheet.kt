@@ -22,10 +22,12 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.mpdriver.components.subtask.sheet.steps.ActionRoutes
 import com.example.mpdriver.components.subtask.sheet.steps.ApiCalls
 import com.example.mpdriver.components.subtask.sheet.steps.Navigator
 import com.example.mpdriver.data.models.AppTask
+import com.example.mpdriver.viewmodels.MainViewModel
 
 
 private enum class SheetState {
@@ -47,7 +49,8 @@ private fun rememberSheetState(): MutableState<SheetState> {
 fun SubtaskSheet(
     setStateAction: () -> Unit = { },
     subtask: AppTask,
-    apiCalls: ApiCalls
+    apiCalls: ApiCalls,
+    model: MainViewModel
 ) {
     var title by remember {
         mutableStateOf("Вам удалось выполнить подзадачу?")
@@ -85,7 +88,7 @@ fun SubtaskSheet(
                 )
             }
             Column {
-                Navigator(subtask = subtask, apiCalls = apiCalls) { route ->
+                Navigator(subtask = subtask, apiCalls = apiCalls, model) { route ->
                     when (route) {
                         ActionRoutes.Initial -> {
                             title ="Вам удалось выполнить подзадачу?"

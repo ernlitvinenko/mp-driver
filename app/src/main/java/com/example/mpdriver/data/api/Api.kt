@@ -7,6 +7,7 @@ import retrofit2.http.Body
 import retrofit2.http.GET
 import retrofit2.http.Header
 import retrofit2.http.POST
+import retrofit2.http.Path
 import retrofit2.http.Query
 
 interface ApiService {
@@ -36,5 +37,36 @@ object RetrofitClient {
             .addConverterFactory(GsonConverterFactory.create())
             .build()
         retrofit.create(ApiService::class.java)
+    }
+}
+
+
+
+
+//{
+//  "id": "0.0.1dev1",
+//  "versionCode": 0,
+//  "description": "Приложение водитель",
+//  "link": "http://10.2.101.91:9000/mp-update/1846cb08-83cf-42dd-a91e-8929ea695cd4app-release.apk"
+//}
+
+data class UpdateChangeLogResponse (
+    val id: String,
+    val versionCode: Int,
+    val description: String,
+    val link: String
+)
+
+interface UpdateService {
+    @GET("updates/{appId}/update-changelog.json")
+    suspend fun getUpdates(@Path("appId") applicationId: String): UpdateChangeLogResponse
+}
+
+object RetrofitUpdateApi {
+    private const val BASE_URL = "http://10.2.101.91:8005/"
+
+    val api: UpdateService by lazy {
+        val retrofit = Retrofit.Builder().baseUrl(BASE_URL).addConverterFactory(GsonConverterFactory.create()).build()
+        retrofit.create(UpdateService::class.java)
     }
 }
