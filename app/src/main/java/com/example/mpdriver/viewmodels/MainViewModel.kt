@@ -10,6 +10,8 @@ import com.example.mpdriver.data.models.AppTask
 import com.example.mpdriver.data.models.EventParameters
 import com.example.mpdriver.data.models.MpdSetAppEventsRequest
 import com.example.mpdriver.data.models.TaskStatus
+import com.example.mpdriver.variables.Route
+import com.example.mpdriver.variables.Routes
 import com.example.mpdriver.variables.datetimeFormatFrom
 import kotlinx.datetime.Clock
 import kotlinx.datetime.LocalDateTime
@@ -17,6 +19,7 @@ import kotlinx.datetime.TimeZone
 import kotlinx.datetime.format
 import kotlinx.datetime.toLocalDateTime
 import retrofit2.HttpException
+import java.net.SocketTimeoutException
 
 
 class MainViewModel : BaseViewModel() {
@@ -31,6 +34,14 @@ class MainViewModel : BaseViewModel() {
 
     val notes: MutableLiveData<List<AppNote>?> by lazy {
         MutableLiveData()
+    }
+
+    val activeRoute: MutableLiveData<Route>  by lazy {
+        MutableLiveData(Routes.Home.Feed)
+    }
+
+    fun setActiveRoute(route: Route) {
+        activeRoute.value = route
     }
 
     val plannedTasksLiveData = tasks.map {
@@ -65,9 +76,15 @@ class MainViewModel : BaseViewModel() {
                 ).format(datetimeFormatFrom)
             )
             Log.d("fetchTaskData", "fetchTaskData: ${tasksData.appTasks}")
-            tasks.value = tasksData.appTasks
-            events.value = tasksData.events
-            notes.value = tasksData.notes
+            tasksData.appTasks?.let {
+                tasks.value = it
+            }
+            tasksData.events?.let {
+                events.value = it
+            }
+            tasksData.notes?.let {
+                notes.value = it
+            }
         } catch (e: HttpException) {
             Log.e("fetchTaskData", "Error on fetching tasks: ${e.message}")
             Log.e("fetchTaskData", "Status code: ${e.code()}")
@@ -75,6 +92,9 @@ class MainViewModel : BaseViewModel() {
             when (e.code()) {
                 401 -> dropAccessToken()
             }
+        }
+        catch (e: SocketTimeoutException) {
+            Log.e("fetchTaskData", "fetchTaskData: error on fetching tasks: ${e.message}", )
         }
     }
 

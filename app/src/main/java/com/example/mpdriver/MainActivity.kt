@@ -1,10 +1,13 @@
 package com.example.mpdriver
 
 import android.Manifest
+import android.app.Activity
 import android.content.Intent
 import android.content.IntentFilter
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.ComponentActivity
+import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -22,13 +25,16 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.core.app.ActivityCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.example.mpdriver.components.HomeScreenLayout
 import com.example.mpdriver.components.InDevelopmentComponent
+import com.example.mpdriver.helpers.AppUpdateHelper
 import com.example.mpdriver.recievers.TimeTickReciever
+import com.example.mpdriver.screens.ActiveTab
 import com.example.mpdriver.screens.AddEventScreen
 import com.example.mpdriver.screens.Feed
 import com.example.mpdriver.screens.ListEventsScreen
@@ -36,6 +42,7 @@ import com.example.mpdriver.screens.MapScreen
 import com.example.mpdriver.screens.NoteScreen
 import com.example.mpdriver.screens.PhoneCodeInputScreen
 import com.example.mpdriver.screens.PhoneInputScreen
+import com.example.mpdriver.screens.SettingsScreen
 import com.example.mpdriver.screens.SubtaskScreen
 import com.example.mpdriver.screens.TasksList
 import com.example.mpdriver.variables.JDEColor
@@ -52,16 +59,35 @@ import com.yandex.mapkit.MapKitFactory
 class MainActivity : ComponentActivity() {
     val timeTickReciever = TimeTickReciever()
 
+    lateinit var appUpdater: AppUpdateHelper
+
     @OptIn(ExperimentalPermissionsApi::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        MapKitFactory.setApiKey("f4385b18-0740-454a-a71f-d20da7e8fc3b")
-        MapKitFactory.initialize(this)
+
+        try {
+            MapKitFactory.initialize(this)
+        }
+        catch (e: AssertionError) {
+            MapKitFactory.setApiKey("f4385b18-0740-454a-a71f-d20da7e8fc3b")
+            MapKitFactory.initialize(this)
+        }
+
+        appUpdater = AppUpdateHelper(this)
+
+//        if (ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
+//            ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.WRITE_EXTERNAL_STORAGE), REQUEST_CODE)
+//        }
+
+//        App updater
+
         registerReceiver(timeTickReciever, IntentFilter(Intent.ACTION_TIME_TICK))
+
 //        val pingWorkManager = PeriodicWorkRequestBuilder<PingServiceWorker>(15, TimeUnit.SECONDS).build()
-
 //        WorkManager.getInstance(this).enqueueUniquePeriodicWork("PingServerWork", ExistingPeriodicWorkPolicy.KEEP, pingWorkManager)
-
+//        ActivityCompat.requestPermissions(
+//            this, arrayOf(Manifest.permission.WRITE_EXTERNAL_STORAGE, Manifest.permission.READ_EXTERNAL_STORAGE, Manifest.permission.POST_NOTIFICATIONS), 23
+//        )
 
         enableEdgeToEdge()
         setContent {
@@ -69,6 +95,8 @@ class MainActivity : ComponentActivity() {
                 rememberLauncherForActivityResult(contract = ActivityResultContracts.RequestPermission()) {}
             val notificationPermissionState =
                 rememberPermissionState(Manifest.permission.POST_NOTIFICATIONS)
+            val externalStoragePermission =
+                rememberPermissionState(Manifest.permission.WRITE_EXTERNAL_STORAGE)
 
             if (notificationPermissionState.status.isGranted) {
                 Column {
@@ -76,12 +104,15 @@ class MainActivity : ComponentActivity() {
                 }
             }
 
-            LaunchedEffect(notificationPermissionState) {
+
+            LaunchedEffect(notificationPermissionState, externalStoragePermission) {
                 if (!notificationPermissionState.status.isGranted) {
                     notificationPermissionResultLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
                 }
+                if (!externalStoragePermission.status.isGranted) {
+                    notificationPermissionResultLauncher.launch(Manifest.permission.WRITE_EXTERNAL_STORAGE)
+                }
             }
-
 
         }
     }
@@ -96,7 +127,6 @@ class MainActivity : ComponentActivity() {
 
 @Composable
 fun Navigator(
-    model: AuthViewModel = viewModel(),
     mainViewModel: MainViewModel = viewModel(),
     authViewModel: AuthViewModel = viewModel()
 ) {
@@ -136,13 +166,30 @@ fun Navigator(
         return
     }
 
+    val activity = LocalContext.current as? Activity
+
     NavHost(navController = navController, startDestination = startDestination.route) {
+        composable(Routes.Settings.route) {
+            BackHandler {
+                activity?.finish()
+            }
+            SettingsScreen()
+
+        }
         composable(Routes.Auth.route) {
+            BackHandler(enabled = true) {
+                activity?.finish()
+            }
             PhoneInputScreen(navigateTo = {
                 navigateTo(Routes.Auth.Code)
             }, viewmodel = authViewModel)
         }
         composable(Routes.Auth.Code.route) {
+            BackHandler(enabled = true) {
+                mainViewModel.dropAccessToken()
+                authViewModel.clearAllData()
+                navigateTo(Routes.Auth)
+            }
             PhoneCodeInputScreen(
                 authViewModel = authViewModel,
                 mainViewModel = mainViewModel,
@@ -151,20 +198,39 @@ fun Navigator(
                 })
         }
         composable(Routes.Home.Feed.route) {
-            HomeScreenLayout(navigateUp = { navigateUp() }, navigateTo = { navigateTo(it) }) {
-                Feed(navigateToTasks = {
-                    navController.navigate(Routes.Home.Tasks.route)
-                }, model = mainViewModel, navigateToTask = {
-                    navigateTo(Routes.Home.Tasks.Task.navigateTo(it))
-                },
-                    navigateToHome = { navigateTo(Routes.Home.Feed) })
+            BackHandler(true) {
+                activity?.finish()
+            }
+            HomeScreenLayout(
+                mainViewModel = mainViewModel,
+                navigateUp = { navigateUp() },
+                navigateTo = { navigateTo(it) },
+                exitAccountAction = {
+                    mainViewModel.dropAccessToken()
+                    authViewModel.clearAllData()
+                    navigateTo(Routes.Auth)
+                }) {
+                Feed(navigateTo = { navigateTo(it) },
+                    model = mainViewModel, navigateToTask = {
+                        navigateTo(Routes.Home.Tasks.Task.navigateTo(it))
+                    })
             }
         }
         composable(Routes.Home.Chat.route) {
-            HomeScreenLayout(navigateUp = { navigateUp() },
+            BackHandler(true) {
+                navigateTo(Routes.Home.Feed)
+            }
+            HomeScreenLayout(
+                mainViewModel = mainViewModel,
+                navigateUp = { navigateUp() },
                 navigateTo = { navigateTo(it) },
-                title = "Чат") {
-                Column(Modifier.fillMaxWidth().fillMaxHeight(), verticalArrangement = Arrangement.Center) {
+                title = "Чат"
+            ) {
+                Column(
+                    Modifier
+                        .fillMaxWidth()
+                        .fillMaxHeight(), verticalArrangement = Arrangement.Center
+                ) {
                     InDevelopmentComponent {
                         navigateTo(Routes.Home.Feed)
                     }
@@ -173,16 +239,27 @@ fun Navigator(
             }
         }
         composable(Routes.Home.Events.route) {
-            HomeScreenLayout(navigateUp = { navigateUp() }, navigateTo = { navigateTo(it) },
+            BackHandler(true) {
+                navigateTo(Routes.Home.Feed)
+            }
+            HomeScreenLayout(
+                mainViewModel = mainViewModel,
+                navigateUp = { navigateUp() }, navigateTo = { navigateTo(it) },
                 title = "События"
-                ) {
-               ListEventsScreen(model = mainViewModel, navigateTo = {navigateTo(it)})
+            ) {
+                ListEventsScreen(model = mainViewModel, navigateTo = { navigateTo(it) })
             }
         }
 
         composable(Routes.Home.Events.Add.route) {
-            HomeScreenLayout(navigateUp = { navigateUp()}, navigateTo = {navigateTo(it)},
-                title = "Добавить событие", backlink = true) {
+            BackHandler(true) {
+                navigateTo(Routes.Home.Events)
+            }
+            HomeScreenLayout(
+                mainViewModel = mainViewModel,
+                navigateUp = { navigateUp() }, navigateTo = { navigateTo(it) },
+                title = "Добавить событие", backlink = true
+            ) {
                 AddEventScreen {
                     navigateTo(it)
                 }
@@ -190,34 +267,84 @@ fun Navigator(
         }
 
         composable(Routes.Home.Notifications.route) {
-            HomeScreenLayout(navigateUp = { navigateUp() }, navigateTo = { navigateTo(it) }, title = "Уведомления") {
+            BackHandler(true) {
+                navigateTo(Routes.Home.Feed)
+            }
+            HomeScreenLayout(
+
+                mainViewModel = mainViewModel,
+                navigateUp = { navigateUp() },
+                navigateTo = { navigateTo(it) },
+                title = "Уведомления"
+            ) {
                 NoteScreen()
             }
         }
         composable(Routes.Home.Tasks.route) {
+            BackHandler(true) {
+                navigateTo(Routes.Home.Feed)
+            }
             HomeScreenLayout(
+                mainViewModel = mainViewModel,
                 navigateUp = { navigateUp() },
                 navigateTo = { navigateTo(it) }, title = "Задачи"
             ) {
-                TasksList(mainViewModel = mainViewModel)
+                TasksList(mainViewModel = mainViewModel, navigateTo = {navigateTo(it)})
             }
         }
+
+        composable(Routes.Home.Tasks.Planned.route) {
+            BackHandler(true) {
+                navigateTo(Routes.Home.Feed)
+            }
+            HomeScreenLayout(
+                mainViewModel = mainViewModel,
+                navigateUp = { navigateUp() },
+                navigateTo = { navigateTo(it) }, title = "Задачи"
+            ) {
+                TasksList(mainViewModel = mainViewModel, navigateTo = {navigateTo(it)})
+            }
+        }
+
+        composable(Routes.Home.Tasks.Closed.route) {
+            BackHandler(true) {
+                navigateTo(Routes.Home.Feed)
+            }
+            HomeScreenLayout(
+                mainViewModel = mainViewModel,
+                navigateUp = { navigateUp() },
+                navigateTo = { navigateTo(it) }, title = "Задачи"
+            ) {
+                TasksList(mainViewModel = mainViewModel, activeTabDefault = ActiveTab.COMPLETED, navigateTo = {navigateTo(it)})
+            }
+        }
+
+
         composable(
             Routes.Home.Tasks.Task.route,
             arguments = Routes.Home.Tasks.Task.navArguments
         ) { stackEntry ->
+            BackHandler(enabled = true) {
+                navigateTo(Routes.Home.Feed)
+            }
             HomeScreenLayout(
+                mainViewModel = mainViewModel,
                 navigateUp = { navigateUp() },
                 navigateTo = { navigateTo(it) },
                 title = "Детали задачи",
                 backlink = true
             ) {
-                SubtaskScreen(Routes.Home.Tasks.Task.backStack(stackEntry)!!, mainViewModel)
+                SubtaskScreen(Routes.Home.Tasks.Task.backStack(stackEntry)!!, mainViewModel, navigateTo = {navigateTo(it)})
             }
         }
 
         composable(Routes.Home.Map.route) {
+
+            BackHandler(enabled = true) {
+                navigateTo(Routes.Home.Feed)
+            }
             HomeScreenLayout(
+                mainViewModel = mainViewModel,
                 navigateUp = { navigateUp() },
                 navigateTo = { navigateTo(it) },
                 title = "Карта"

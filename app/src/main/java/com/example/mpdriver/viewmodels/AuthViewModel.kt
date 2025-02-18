@@ -1,13 +1,8 @@
 package com.example.mpdriver.viewmodels
 
-import android.util.Base64
 import android.util.Log
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
-import androidx.lifecycle.ViewModel
-import androidx.navigation.NavHostController
-import com.example.mpdriver.data.api.ApiService
-import com.example.mpdriver.data.api.RetrofitClient
 import com.example.mpdriver.data.models.GetPhoneCodeRequest
 import com.example.mpdriver.data.models.GetPhoneCodeResponse
 import okhttp3.Credentials
@@ -19,6 +14,11 @@ class AuthViewModel : BaseViewModel() {
 
     var phoneNumber: LiveData<String> = _phoneNumber
     var phoneCode: LiveData<String> = _phoneCode
+
+    fun clearAllData() {
+        _phoneNumber.value = ""
+        _phoneCode.value = ""
+    }
 
     fun onChangePhoneNumber(value: String) {
         _phoneNumber.value = value
@@ -35,9 +35,18 @@ class AuthViewModel : BaseViewModel() {
 
     suspend fun getCode(): GetPhoneCodeResponse? {
         phoneNumber.value?.let {
-            val data = api.getPhoneCode(GetPhoneCodeRequest(phoneNumber = it))
-            return data
+            try {
+                val data = api.getPhoneCode(GetPhoneCodeRequest(phoneNumber = it))
+                Log.d("GetSMSCode", "getCode bla bla bla: ${data}")
+                return data
+            }
+            catch (e: Exception) {
+                Log.e("GetSMSCodeError", "error is: ${e.message}")
+                return GetPhoneCodeResponse(code=null, status = -100, error = null)
+            }
+
         }
+        Log.d("SMSCODEERROR", "phone_number: ${phoneNumber.value}")
         return null
     }
 
@@ -46,11 +55,17 @@ class AuthViewModel : BaseViewModel() {
             return
         }
         val cred = Credentials.basic(phoneNumber.value!!, phoneCode.value!!)
-
-        val data = api.getToken(cred)
-        data.accessToken.forEach {
-            setAccessTokenHandler(it)
+        try {
+            val data = api.getToken(cred)
+            data.accessToken.forEach {
+                setAccessTokenHandler(it)
+            }
         }
+        catch (e: Exception) {
+            Log.e("Enter SMS Code", "${e.message}")
+            return
+        }
+
 
 
     }

@@ -46,7 +46,7 @@ fun ActiveButton(onClick: () -> Unit = {}, modifier: Modifier = Modifier, text: 
 }
 
 @Composable
-fun StaleButton(onClick: () -> Unit, modifier: Modifier = Modifier, text: String) {
+fun StaleButton(onClick: () -> Unit, modifier: Modifier = Modifier, text: String, isLoading: Boolean = false) {
     Button(
         modifier = modifier,
         onClick = onClick,
@@ -54,8 +54,13 @@ fun StaleButton(onClick: () -> Unit, modifier: Modifier = Modifier, text: String
             containerColor = JDEColor.TEXT_FIELD_BG_COLOR.color,
             contentColor = Color.Black
         ),
+        enabled = !isLoading,
         shape = RoundedCornerShape(10.dp)
     ) {
+        if (isLoading) {
+            CircularProgressIndicator(modifier = Modifier.padding(5.dp), color = JDEColor.PRIMARY.color)
+            return@Button
+        }
         Text(text = text)
     }
 }

@@ -1,3 +1,5 @@
+import com.android.build.api.dsl.Packaging
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.jetbrains.kotlin.android)
@@ -8,6 +10,16 @@ plugins {
 android {
     namespace = "com.example.mpdriver"
     compileSdk = 34
+
+    packagingOptions {
+        jniLibs {
+            useLegacyPackaging = true
+        }
+        exclude("lib/x86/libmaps-mobile.so")
+        exclude("lib/x86_64/libmaps-mobile.so")
+//        exclude("lib/arm64-v8a/libmaps-mobile.so")
+        exclude("lib/armeabi-v7a/libmaps-mobile.so")
+    }
 
     defaultConfig {
         applicationId = "com.example.mpdriver"
@@ -28,11 +40,13 @@ android {
 
     buildTypes {
         release {
-            isMinifyEnabled = false
+            isMinifyEnabled = true
+            isShrinkResources = true
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
+            signingConfig = signingConfigs.getByName("debug")
         }
     }
     compileOptions {
@@ -80,13 +94,10 @@ dependencies {
     implementation(libs.kotlinx.datetime)
     implementation(libs.yandex.maps)
     implementation(libs.kotlin.coroutines)
-    implementation("androidx.room:room-ktx:2.5.0")
     implementation("com.google.accompanist:accompanist-permissions:0.34.0")
     implementation("com.squareup.retrofit2:retrofit:2.11.0") // Retrofit
     implementation("com.squareup.retrofit2:converter-gson:2.9.0") // Конвертер JSON
     implementation("androidx.work:work-runtime-ktx:2.9.0")
-
-
     implementation("com.github.commandiron:WheelPickerCompose:1.1.11")
 
 }

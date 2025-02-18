@@ -60,6 +60,13 @@ fun AddEventScreen(
 
     val coroutineScope = rememberCoroutineScope()
 
+    var isLoading by remember {
+        mutableStateOf(false)
+    }
+    var isError by remember {
+        mutableStateOf(false)
+    }
+
     LazyColumn(
         modifier
             .fillMaxWidth()
@@ -106,26 +113,36 @@ fun AddEventScreen(
 
         item {
             selectedOption?.let {
-                EventComponent(eventType = it, eventData = eventData)
+                EventComponent(
+                    eventType = it,
+                    eventData = eventData,
+                    setError = { v -> isError = v })
             }
         }
 
         item {
             selectedOption?.let {
                 Spacer(modifier = Modifier.height(10.dp))
-                ActiveButton(modifier = Modifier.fillMaxWidth(), text = "Сохранить", onClick = {
-                    coroutineScope.launch {
-                        eventData["type"] = it.eventName
-                        mainViewModel.addEvent(
-                            task,
-                            eventData = eventData
-                        )
-                        mainViewModel.fetchTaskData()
-                        withContext(Dispatchers.Main) {
-                            navigateTo(Routes.Home.Feed)
+                ActiveButton(
+                    modifier = Modifier.fillMaxWidth(), text = "Сохранить", isLoading = isLoading,
+                    onClick = {
+                        if (isError) {
+                            return@ActiveButton
                         }
-                    }
-                })
+                        isLoading = true
+                        coroutineScope.launch {
+                            eventData["type"] = it.eventName
+                            mainViewModel.addEvent(
+                                task,
+                                eventData = eventData
+                            )
+                            mainViewModel.fetchTaskData()
+                            withContext(Dispatchers.Main) {
+                                navigateTo(Routes.Home.Events)
+                            }
+                        }
+                    },
+                )
             }
         }
     }

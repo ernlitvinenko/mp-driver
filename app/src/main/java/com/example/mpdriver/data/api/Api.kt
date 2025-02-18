@@ -1,5 +1,6 @@
 package com.example.mpdriver.data.api
 
+import androidx.annotation.Keep
 import com.example.mpdriver.data.models.*
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
@@ -7,6 +8,7 @@ import retrofit2.http.Body
 import retrofit2.http.GET
 import retrofit2.http.Header
 import retrofit2.http.POST
+import retrofit2.http.Path
 import retrofit2.http.Query
 
 interface ApiService {
@@ -29,12 +31,44 @@ interface ApiService {
 }
 
 object RetrofitClient {
-    private const val BASE_URL = "http://10.2.100.150:3002/datasnapJDE/rest/TsmAPIvJ/"
+    private const val BASE_URL = "http://10.2.100.110:30033/datasnapJDE/rest/TsmAPIvJ/"
     val api: ApiService by lazy {
         val retrofit = Retrofit.Builder()
             .baseUrl(BASE_URL)
             .addConverterFactory(GsonConverterFactory.create())
             .build()
         retrofit.create(ApiService::class.java)
+    }
+}
+
+
+
+
+//{
+//  "id": "0.0.1dev1",
+//  "versionCode": 0,
+//  "description": "Приложение водитель",
+//  "link": "http://10.2.101.91:9000/mp-update/1846cb08-83cf-42dd-a91e-8929ea695cd4app-release.apk"
+//}
+
+@Keep
+data class UpdateChangeLogResponse (
+    val id: String,
+    val versionCode: Int,
+    val description: String,
+    val link: String
+)
+
+interface UpdateService {
+    @GET("updates/{appId}/update-changelog.json")
+    suspend fun getUpdates(@Path("appId") applicationId: String): UpdateChangeLogResponse
+}
+
+object RetrofitUpdateApi {
+    private const val BASE_URL = "http://10.2.101.91:8005/"
+
+    val api: UpdateService by lazy {
+        val retrofit = Retrofit.Builder().baseUrl(BASE_URL).addConverterFactory(GsonConverterFactory.create()).build()
+        retrofit.create(UpdateService::class.java)
     }
 }

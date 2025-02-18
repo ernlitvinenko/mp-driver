@@ -14,7 +14,7 @@ okhttp = '4.12.0'
 gson = "2.11.0"
 mmkv = "1.3.5"
 kotlinx-datetime = "0.6.0"
-yandex-maps = "4.6.1-full"
+yandex-maps = "4.6.1-lite"
 kotlin-coroutines = "1.3.9"
 runtimeLivedata = "1.7.5"
 

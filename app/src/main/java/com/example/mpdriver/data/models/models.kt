@@ -1,7 +1,9 @@
 package com.example.mpdriver.data.models
 
+import androidx.annotation.Keep
 import com.google.gson.annotations.SerializedName
 
+@Keep
 enum class TaskStatus {
     // ID_VLST = 20303
     // MPDRIVER: Статус задачи
@@ -18,6 +20,7 @@ enum class TaskStatus {
     NOT_DEFINED
 }
 
+@Keep
 enum class TaskType {
 //    ID_VLST = 20301
 //    MPDRIVER: Типы событий
@@ -38,6 +41,7 @@ enum class TaskType {
     SET_LOADING
 }
 
+@Keep
 enum class MarshTemperatureProperty {
     @SerializedName("1")
     HOT,
@@ -49,22 +53,23 @@ enum class MarshTemperatureProperty {
     NOT_DEFINED
 }
 
-
+@Keep
 data class GetPhoneCodeRequest(
     @SerializedName("phone") val phoneNumber: String
 )
-
+@Keep
 data class GetPhoneCodeResponse(
     val code: Int?,
-    val status: Int
+    val status: Int,
+    val error: String?
 )
-
+@Keep
 data class GetTokenResponse(
     @SerializedName("result")
     val accessToken: List<String>,
 )
 
-
+@Keep
 data class AppTask(
     val id: Long,
     val startPln: String,
@@ -83,25 +88,25 @@ data class AppTask(
 
     val station: AppMstResponse?
 )
-
+@Keep
 data class GetMPD_APP_TASK_RESPONSE(
     @SerializedName("app_tasks") val appTasks: List<AppTask>?,
     @SerializedName("global_events") val events: List<AppEventResponse>?,
     @SerializedName("global_notes") val notes: List<AppNote>?
 )
 
-
+@Keep
 data class AppMstResponse(
     val id: Long,
     val name: String,
     val location: AppLocationResponse,
 )
-
+@Keep
 data class AppLocationResponse(
     val lat: Float,
     val lon: Float
 )
-
+@Keep
 data class AppEventResponse(
     val id: Long,
     val type: String,
@@ -109,7 +114,7 @@ data class AppEventResponse(
     val eventDatetime: String,
     val eventData: List<Map<String, String>>
 )
-
+@Keep
 data class AppNote(
     val id: Long,
     val idAppTask: AppTask?,
@@ -119,7 +124,7 @@ data class AppNote(
     val dtCreate: String,
     val dtChange: String
 )
-
+@Keep
 data class AppMarshResponse(
     val id: Long,
     val temperatureProperty: MarshTemperatureProperty,
@@ -127,7 +132,7 @@ data class AppMarshResponse(
     val trailer: AppTRSResponse?,
     val truck: AppTRSResponse?
 )
-
+@Keep
 data class AppTRSResponse(
     val id: Long,
     val gost: String?

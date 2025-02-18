@@ -18,8 +18,11 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.mpdriver.NotificationData
+import com.example.mpdriver.NotificationService
 import com.example.mpdriver.components.Layout
 import com.example.mpdriver.components.feed.ActiveTask
 import com.example.mpdriver.components.feed.FeedTaskDataCard
@@ -28,6 +31,7 @@ import com.example.mpdriver.components.subtask.sheet.steps.FailureStepApiCallDat
 import com.example.mpdriver.components.subtask.sheet.steps.SuccessStepApiCallData
 import com.example.mpdriver.data.models.TaskStatus
 import com.example.mpdriver.variables.JDEColor
+import com.example.mpdriver.variables.Route
 import com.example.mpdriver.variables.Routes
 import com.example.mpdriver.variables.datetimeFormatFrom
 import com.example.mpdriver.viewmodels.MainViewModel
@@ -42,18 +46,21 @@ private data class FeedDataListProps(
     val count: Int,
     val date: String,
     val buttonLabel: String,
-    val dateDescription: String
+    val dateDescription: String,
+    val handler: () -> Unit
 )
 
 
 @Composable
 fun Feed(
     modifier: Modifier = Modifier,
-    model: MainViewModel = viewModel(),
-    navigateToHome: () -> Unit = {},
+    model: MainViewModel,
+    navigateTo: (Route) -> Unit = {},
     navigateToTask: (Long) -> Unit = {},
-    navigateToTasks: () -> Unit = {},
+
 ) {
+    val context = LocalContext.current
+    val notificationService = NotificationService(context)
 
     //    Fetch active task
     var isLoading by remember {
@@ -85,7 +92,8 @@ fun Feed(
                 )
             },
             buttonLabel = "Смотреть запланированные задачи",
-            dateDescription = "Ближайшая"
+            dateDescription = "Ближайшая",
+            handler = {navigateTo(Routes.Home.Tasks.Planned)}
         ),
         FeedDataListProps(
             title = "Завершенные задачи",
@@ -100,7 +108,8 @@ fun Feed(
                 )
             },
             buttonLabel = "Смотреть завершенные задачи",
-            dateDescription = "Последняя"
+            dateDescription = "Последняя",
+            handler = {navigateTo(Routes.Home.Tasks.Closed)}
         )
     )
 
@@ -123,13 +132,14 @@ fun Feed(
 
     Layout(dataList = dataList, header = {
         Column {
-            ActiveTask(activeTask = activeTask.value, navigateToTask = {navigateToTask(it)}, apiCalls = object : ApiCalls {
+            ActiveTask(activeTask = activeTask.value, navigateToTask = {navigateToTask(it)}, model = model, apiCalls = object : ApiCalls {
                 override fun success(data: SuccessStepApiCallData) {
                     coroutineScope.launch {
                         model.changeTask(data.subtaskId, TaskStatus.COMPLETED, datetime = data.dateTime)
                         model.fetchTaskData()
                         withContext(Dispatchers.Main) {
-                            navigateToHome()
+                            navigateTo(Routes.Home.Feed)
+                            notificationService.showNotification(NotificationData(title = "MP Водитель - Изменился статус подзадачи", text = "Текущий статус подзадачи - Выполнено"))
                         }
                     }
                 }
@@ -139,7 +149,8 @@ fun Feed(
                         model.changeTask(data.subtaskId, TaskStatus.CANCELLED, data.datetime, errorText = data.reason)
                         model.fetchTaskData()
                        withContext(Dispatchers.Main) {
-                           navigateToHome()
+                            navigateTo(Routes.Home.Feed)
+                            notificationService.showNotification(NotificationData(title = "MP Водитель - Изменился статус подзадачи", text = "Текущий статус подзадачи - Отменено"))
                        }
                     }
                 }
@@ -156,7 +167,7 @@ fun Feed(
             buttonLabel = it.buttonLabel,
             date = it.date,
         ) {
-            navigateToTasks()
+            it.handler()
         }
     }
 }

@@ -8,11 +8,16 @@ import android.util.Log
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import com.example.mpdriver.data.api.RetrofitClient
+import com.example.mpdriver.data.api.RetrofitUpdateApi
 import com.example.mpdriver.data.database.DatabaseHelper
+import com.example.mpdriver.variables.VC
 import java.sql.SQLException
 
 open class BaseViewModel: ViewModel() {
+    internal val VERSION_CODE = VC
+
     internal val api = RetrofitClient.api
+    internal val updateApi = RetrofitUpdateApi.api
     internal var db: SQLiteDatabase? = null
 
 
@@ -34,8 +39,11 @@ open class BaseViewModel: ViewModel() {
 
         if (checkDBInstance()) {
             try {
-                db!!.execSQL("""insert into preferences (id, p_key, p_val) values (1, 'access_token', '${accessToken.value}') on conflict do update set p_val=excluded.p_val""")
+                db!!.execSQL("""delete from preferences where id = 1""")
+                db!!.execSQL("""insert into preferences (id, p_key, p_val) values (1, 'access_token', '${accessToken.value}')""")
+
                 Log.i("viewModel_setAccessToken", "access_token has been inserted into preferences table")
+
                 return
             }
             catch (e: SQLException) {
