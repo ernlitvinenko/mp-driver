@@ -26,14 +26,19 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.mpdriver.NotificationData
+import com.example.mpdriver.NotificationService
 import com.example.mpdriver.components.HeaderTabs
 import com.example.mpdriver.components.HeaderTabsData
 import com.example.mpdriver.components.Layout
 import com.example.mpdriver.components.TaskComponent
 import com.example.mpdriver.data.models.TaskStatus
 import com.example.mpdriver.variables.JDEColor
+import com.example.mpdriver.variables.Route
+import com.example.mpdriver.variables.Routes
 import com.example.mpdriver.viewmodels.MainViewModel
 import kotlinx.coroutines.launch
 import kotlinx.datetime.Clock
@@ -49,7 +54,12 @@ enum class ActiveTab {
 @Composable
 fun TasksList(modifier: Modifier = Modifier,
               mainViewModel: MainViewModel = viewModel(),
-              activeTabDefault: ActiveTab = ActiveTab.PLANNED) {
+              activeTabDefault: ActiveTab = ActiveTab.PLANNED,
+              navigateTo: (Route) -> Unit ={}
+) {
+
+    val context = LocalContext.current
+
     var isLoading by remember {
         mutableStateOf(true)
     }
@@ -116,6 +126,8 @@ fun TasksList(modifier: Modifier = Modifier,
                                 )
                             )
                             mainViewModel.fetchTaskData()
+                            navigateTo(Routes.Home.Feed)
+                            NotificationService(context).showNotification(NotificationData(title = "MP Водитель - Статус задачи поменялся", "Текущий статус задачи - Выполняется"))
                         }
                     },
                     enabled = activeTask.value == null

@@ -37,12 +37,12 @@ class AuthViewModel : BaseViewModel() {
         phoneNumber.value?.let {
             try {
                 val data = api.getPhoneCode(GetPhoneCodeRequest(phoneNumber = it))
-                Log.d("GetSMSCode", "getCode: ${data}")
+                Log.d("GetSMSCode", "getCode bla bla bla: ${data}")
                 return data
             }
             catch (e: Exception) {
-                Log.e("GetSMSCodeError", "${e.message}")
-                return GetPhoneCodeResponse(code=null, status = -100)
+                Log.e("GetSMSCodeError", "error is: ${e.message}")
+                return GetPhoneCodeResponse(code=null, status = -100, error = null)
             }
 
         }

@@ -10,17 +10,31 @@ import androidx.core.graphics.drawable.IconCompat
 import kotlin.random.Random
 
 
+data class NotificationData(
+    val title: String,
+    val text: String
+)
+
 class NotificationService(private val context: Context) {
     val manager = context.getSystemService(NotificationManager::class.java)
+    private val notificationChannel = "mpdriver_notifications"
 
     fun showNotificationAuthCode(code: String) {
-        val notification = NotificationCompat.Builder(context, "mpdriver_notifications")
-            .setContentTitle("MPDriver - код подтверждения")
-            .setContentText("Ваш код подтверждения: $code")
-            .setPriority(NotificationManager.IMPORTANCE_HIGH)
-            .setSmallIcon(R.drawable.tick_default)
-            .setAutoCancel(true)
-            .build()
+        showNotification(
+            NotificationData(
+                "MPDriver - код подтверждения",
+                "Ваш код подтверждения: $code"
+            )
+        )
+    }
+
+    fun showNotification(data: NotificationData) {
+        val notification =
+            NotificationCompat.Builder(context, notificationChannel).setContentTitle(data.title)
+                .setContentText(data.text)
+                .setPriority(NotificationManager.IMPORTANCE_HIGH)
+                .setSmallIcon(R.drawable.hottransport)
+                .build()
 
         manager.notify(Random.nextInt(), notification)
     }

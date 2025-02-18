@@ -18,8 +18,11 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.mpdriver.NotificationData
+import com.example.mpdriver.NotificationService
 import com.example.mpdriver.components.Layout
 import com.example.mpdriver.components.feed.ActiveTask
 import com.example.mpdriver.components.feed.FeedTaskDataCard
@@ -56,6 +59,8 @@ fun Feed(
     navigateToTask: (Long) -> Unit = {},
 
 ) {
+    val context = LocalContext.current
+    val notificationService = NotificationService(context)
 
     //    Fetch active task
     var isLoading by remember {
@@ -134,6 +139,7 @@ fun Feed(
                         model.fetchTaskData()
                         withContext(Dispatchers.Main) {
                             navigateTo(Routes.Home.Feed)
+                            notificationService.showNotification(NotificationData(title = "MP Водитель - Изменился статус подзадачи", text = "Текущий статус подзадачи - Выполнено"))
                         }
                     }
                 }
@@ -144,6 +150,7 @@ fun Feed(
                         model.fetchTaskData()
                        withContext(Dispatchers.Main) {
                             navigateTo(Routes.Home.Feed)
+                            notificationService.showNotification(NotificationData(title = "MP Водитель - Изменился статус подзадачи", text = "Текущий статус подзадачи - Отменено"))
                        }
                     }
                 }

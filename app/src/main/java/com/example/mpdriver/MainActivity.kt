@@ -42,6 +42,7 @@ import com.example.mpdriver.screens.MapScreen
 import com.example.mpdriver.screens.NoteScreen
 import com.example.mpdriver.screens.PhoneCodeInputScreen
 import com.example.mpdriver.screens.PhoneInputScreen
+import com.example.mpdriver.screens.SettingsScreen
 import com.example.mpdriver.screens.SubtaskScreen
 import com.example.mpdriver.screens.TasksList
 import com.example.mpdriver.variables.JDEColor
@@ -49,12 +50,6 @@ import com.example.mpdriver.variables.Route
 import com.example.mpdriver.variables.Routes
 import com.example.mpdriver.viewmodels.AuthViewModel
 import com.example.mpdriver.viewmodels.MainViewModel
-import com.github.javiersantos.appupdater.AppUpdater
-import com.github.javiersantos.appupdater.AppUpdaterUtils
-import com.github.javiersantos.appupdater.enums.AppUpdaterError
-import com.github.javiersantos.appupdater.enums.Display
-import com.github.javiersantos.appupdater.enums.UpdateFrom
-import com.github.javiersantos.appupdater.objects.Update
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.isGranted
 import com.google.accompanist.permissions.rememberPermissionState
@@ -174,6 +169,13 @@ fun Navigator(
     val activity = LocalContext.current as? Activity
 
     NavHost(navController = navController, startDestination = startDestination.route) {
+        composable(Routes.Settings.route) {
+            BackHandler {
+                activity?.finish()
+            }
+            SettingsScreen()
+
+        }
         composable(Routes.Auth.route) {
             BackHandler(enabled = true) {
                 activity?.finish()
@@ -287,7 +289,7 @@ fun Navigator(
                 navigateUp = { navigateUp() },
                 navigateTo = { navigateTo(it) }, title = "Задачи"
             ) {
-                TasksList(mainViewModel = mainViewModel)
+                TasksList(mainViewModel = mainViewModel, navigateTo = {navigateTo(it)})
             }
         }
 
@@ -300,7 +302,7 @@ fun Navigator(
                 navigateUp = { navigateUp() },
                 navigateTo = { navigateTo(it) }, title = "Задачи"
             ) {
-                TasksList(mainViewModel = mainViewModel)
+                TasksList(mainViewModel = mainViewModel, navigateTo = {navigateTo(it)})
             }
         }
 
@@ -313,7 +315,7 @@ fun Navigator(
                 navigateUp = { navigateUp() },
                 navigateTo = { navigateTo(it) }, title = "Задачи"
             ) {
-                TasksList(mainViewModel = mainViewModel, activeTabDefault = ActiveTab.COMPLETED)
+                TasksList(mainViewModel = mainViewModel, activeTabDefault = ActiveTab.COMPLETED, navigateTo = {navigateTo(it)})
             }
         }
 

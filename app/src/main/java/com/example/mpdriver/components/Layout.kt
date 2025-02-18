@@ -1,6 +1,7 @@
 package com.example.mpdriver.components
 
 import android.util.Log
+import android.widget.ProgressBar
 import android.widget.Spinner
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
@@ -24,6 +25,7 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
@@ -52,6 +54,7 @@ import com.example.mpdriver.data.api.UpdateChangeLogResponse
 import com.example.mpdriver.helpers.isAppInstalled
 import com.example.mpdriver.variables.JDEColor
 import com.example.mpdriver.variables.Route
+import com.example.mpdriver.variables.Routes
 import com.example.mpdriver.variables.version
 import com.example.mpdriver.viewmodels.MainViewModel
 import com.example.mpdriver.viewmodels.UpdateViewModel
@@ -65,6 +68,7 @@ import kotlinx.coroutines.withContext
 fun <T> Layout(
     modifier: Modifier = Modifier,
     header: @Composable () -> Unit = {},
+    footer: @Composable () -> Unit = {},
     dataList: List<T>,
     state: LazyListState = rememberLazyListState(),
     itemComponent: @Composable (T) -> Unit
@@ -87,7 +91,9 @@ fun <T> Layout(
                 itemComponent(it)
             }
         }
-
+        item {
+            footer()
+        }
     }
 }
 
@@ -131,6 +137,10 @@ fun HomeScreenLayout(
 
     var isDownloadInProgress by remember {
         mutableStateOf(false)
+    }
+
+    var downloadProgress by remember {
+        mutableStateOf(0f)
     }
 
     Scaffold(
@@ -230,6 +240,14 @@ fun HomeScreenLayout(
                         Text(text = "Установка Яндекс навигатора", fontWeight = FontWeight.Bold)
                     }
                 }
+                
+                IteractionButton(onClick = { navigateTo(Routes.Settings) }) {
+                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center) {
+                        Text(text = "Расширенные настройки", fontWeight = FontWeight.Bold)
+                        Spacer(modifier = Modifier.width(10.dp))
+                        Text(text = ">")
+                    }
+                }
                 HorizontalDivider(Modifier.padding(vertical = 10.dp))
                 OutlinedButton(
                     onClick = { exitAccountAction() },
@@ -266,12 +284,10 @@ fun HomeScreenLayout(
                         fontWeight = FontWeight.Bold,
                         fontSize = 20.sp
                     )
-                    CircularProgressIndicator(
-                        modifier = Modifier
+                    LinearProgressIndicator(progress = { downloadProgress },
+                        Modifier
                             .padding(5.dp)
-                            .align(Alignment.CenterHorizontally),
-                        color = JDEColor.PRIMARY.color
-                    )
+                            .fillMaxWidth(), color = JDEColor.PRIMARY.color)
                 } else {
                     Text(
                         if (sheetUpdateData != null) "Доступно новое обновление" else "Нет новых обновлений",
@@ -288,9 +304,14 @@ fun HomeScreenLayout(
                             onClick = {
                                 sheetUpdateData?.link?.let {
                                     isDownloadInProgress = true
-                                    context.appUpdater.downloadAndInstallApk(
+                                    val downloadId = context.appUpdater.downloadAndInstallApk(
                                         it
                                     )
+                                    coroutineScope.launch {
+                                        context.appUpdater.getPercentageOfDownloading(downloadId) {
+                                            downloadProgress = it
+                                        }
+                                    }
                                 }
                             },
                             shape = RoundedCornerShape(10.dp),

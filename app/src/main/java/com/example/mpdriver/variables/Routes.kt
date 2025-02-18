@@ -16,6 +16,7 @@ open class Route(private vararg val routes: String) {
 
 
 sealed class Routes(val route: String) {
+    data object Settings: Route("settings")
     data object Auth : Route("auth") {
         data object Code : Route(Auth, "code")
     }

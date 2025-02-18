@@ -22,6 +22,7 @@ import kotlinx.datetime.asTimeZone
 import kotlinx.datetime.toInstant
 import kotlinx.datetime.toLocalDateTime
 import kotlinx.datetime.until
+import kotlin.math.abs
 
 @Composable
 fun ListEventsScreen(model: MainViewModel = viewModel(), navigateTo: (Route) -> Unit) {
@@ -32,12 +33,26 @@ fun ListEventsScreen(model: MainViewModel = viewModel(), navigateTo: (Route) -> 
 
 
     val filteredEvents = events.value?.filter {
-        nowTime.until(
-            LocalDateTime.parse(it.eventDatetime, datetimeFormatFrom)
-                .toInstant(offset = UtcOffset(3)),
-            timeZone = UtcOffset(3).asTimeZone(), unit = DateTimeUnit.DAY
-        ) > -7
-    }?.sortedBy { -LocalDateTime.parse(it.eventDatetime, datetimeFormatFrom).toInstant(offset = UtcOffset(hours = 3)).epochSeconds }
+        val dt = it.eventData[0]["date"]
+
+        dt?.let {
+            val days = nowTime.until(
+                LocalDateTime.parse("$dt 00:00:00", datetimeFormatFrom)
+                    .toInstant(offset = UtcOffset(3)),
+                timeZone = UtcOffset(3).asTimeZone(), unit = DateTimeUnit.DAY
+            )
+            return@filter abs(days) < 7
+        }
+        false
+
+    }?.sortedBy {
+        val dt = it.eventData[0]["date"]
+        dt?.let {
+            -LocalDateTime.parse("$dt 00:00:00", datetimeFormatFrom)
+                .toInstant(offset = UtcOffset(hours = 3)).epochSeconds
+        }
+
+    }
 
 
 //    eventsSortedAndFiltered = events.value?.filter { LocalDateTime.parse(it.eventDatetime, datetimeFormatFrom).}

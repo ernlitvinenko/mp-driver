@@ -1,5 +1,6 @@
 package com.example.mpdriver.data.api
 
+import androidx.annotation.Keep
 import com.example.mpdriver.data.models.*
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
@@ -50,6 +51,7 @@ object RetrofitClient {
 //  "link": "http://10.2.101.91:9000/mp-update/1846cb08-83cf-42dd-a91e-8929ea695cd4app-release.apk"
 //}
 
+@Keep
 data class UpdateChangeLogResponse (
     val id: String,
     val versionCode: Int,
