@@ -14,6 +14,7 @@ import com.example.mpdriver.data.models.TaskStatus
 import com.example.mpdriver.variables.Route
 import com.example.mpdriver.variables.Routes
 import com.example.mpdriver.variables.datetimeFormatFrom
+import com.google.gson.Gson
 import kotlinx.coroutines.coroutineScope
 import kotlinx.datetime.Clock
 import kotlinx.datetime.LocalDateTime
@@ -22,6 +23,7 @@ import kotlinx.datetime.format
 import kotlinx.datetime.toLocalDateTime
 import retrofit2.HttpException
 import java.net.SocketTimeoutException
+import kotlin.reflect.KClass
 
 
 class MainViewModel : BaseViewModel() {
@@ -373,8 +375,13 @@ class MainViewModel : BaseViewModel() {
             api.createEvent(generateSessionHeader(), requestData)
         } catch (e: Exception) {
             Log.e("changetaskOnline", "changeTask: ${e.message}")
+            val strval = Tables.Updates.getValue()
+            val data = requestData.map { it }.toMutableList()
+            strval?.let {
+                Gson().fromJson(strval, Array<MpdSetAppEventsRequest>::class.java).forEach{data.add(it)}
+            }
+            Tables.Updates.setValue(Gson().toJson(data))
         }
-
     }
 
     suspend fun changeTask(

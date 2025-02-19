@@ -37,6 +37,8 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import androidx.work.Constraints
+import androidx.work.NetworkType
 import com.example.mpdriver.components.ActiveButton
 import com.example.mpdriver.components.HomeScreenLayout
 import com.example.mpdriver.components.InDevelopmentComponent
@@ -63,12 +65,31 @@ import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.isGranted
 import com.google.accompanist.permissions.rememberPermissionState
 import com.yandex.mapkit.MapKitFactory
+import androidx.work.PeriodicWorkRequestBuilder
+import androidx.work.WorkManager
+import java.util.concurrent.TimeUnit
+import com.example.mpdriver.services.PingServiceWorker
 
 
 class MainActivity : ComponentActivity() {
+
     val timeTickReciever = TimeTickReciever()
 
     lateinit var appUpdater: AppUpdateHelper
+
+    private fun setupPingWorker() {
+        val constraints = Constraints.Builder()
+            .setRequiredNetworkType(NetworkType.CONNECTED)
+            .build()
+
+        val pingWorkRequest = PeriodicWorkRequestBuilder<PingServiceWorker>(
+            15, // repeat interval
+            TimeUnit.MINUTES
+        ).setConstraints(constraints).build()
+
+        WorkManager.getInstance(applicationContext)
+            .enqueue(pingWorkRequest)
+    }
 
     @OptIn(ExperimentalPermissionsApi::class)
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -83,6 +104,7 @@ class MainActivity : ComponentActivity() {
         }
 
         MMKVDb.instance.initializeStorage(this)
+        
 
         appUpdater = AppUpdateHelper(this)
 
@@ -115,6 +137,8 @@ class MainActivity : ComponentActivity() {
             }
 
         }
+
+        setupPingWorker()
     }
 
     override fun onDestroy() {
