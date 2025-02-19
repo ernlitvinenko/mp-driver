@@ -71,7 +71,6 @@ fun PhoneCodeInputScreen(
             textAlign = TextAlign.Center
         )
 
-        Text(text = phoneNumber.value)
 
         Spacer(modifier = Modifier.height(15.dp))
         Text(

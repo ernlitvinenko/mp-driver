@@ -80,7 +80,6 @@ fun PhoneInputScreen(navigateTo: () -> Unit = {}, viewmodel: AuthViewModel = vie
             color = Color.Gray
         )
         Spacer(modifier = Modifier.height(15.dp))
-        Text(text = phone.value)
         TextField(
             value = phone.value,
             isError = errorText != "",

@@ -27,9 +27,11 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.mpdriver.recievers.TimeTickReciever
 import com.example.mpdriver.variables.JDEColor
 import com.example.mpdriver.variables.timeFormat
 import kotlinx.datetime.Clock
+import kotlinx.datetime.TimeZone
 import kotlinx.datetime.UtcOffset
 import kotlinx.datetime.asTimeZone
 import kotlinx.datetime.format
@@ -50,6 +52,11 @@ fun Header(
      var now by remember {
          mutableStateOf("")
      }
+    TimeTickReciever.registerHandler {
+        now = Clock.System.now().toLocalDateTime(timeZone = UtcOffset(hours = 3).asTimeZone()).format(
+            timeFormat.toKotlin()
+        )
+    }
 
     LaunchedEffect(Unit) {
         now = Clock.System.now().toLocalDateTime(timeZone = UtcOffset(hours = 3).asTimeZone()).format(

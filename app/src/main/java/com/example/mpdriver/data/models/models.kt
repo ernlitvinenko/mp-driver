@@ -74,16 +74,16 @@ data class AppTask(
     val id: Long,
     val startPln: String,
     val endPln: String,
-    val startFact: String?,
-    val endFact: String?,
+    var startFact: String?,
+    var endFact: String?,
 
-    val status: TaskStatus,
+    var status: TaskStatus,
     val taskType: TaskType,
 
     val text: String,
 
     val events: List<AppEventResponse>?,
-    val subtasks: List<AppTask>?,
+    var subtasks: List<AppTask>?,
     val route: AppMarshResponse?,
 
     val station: AppMstResponse?
