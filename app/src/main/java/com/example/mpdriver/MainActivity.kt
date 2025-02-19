@@ -13,10 +13,16 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -25,13 +31,16 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.unit.dp
 import androidx.core.app.ActivityCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.example.mpdriver.components.ActiveButton
 import com.example.mpdriver.components.HomeScreenLayout
 import com.example.mpdriver.components.InDevelopmentComponent
+import com.example.mpdriver.data.database.MMKVDb
 import com.example.mpdriver.helpers.AppUpdateHelper
 import com.example.mpdriver.recievers.TimeTickReciever
 import com.example.mpdriver.screens.ActiveTab
@@ -73,21 +82,12 @@ class MainActivity : ComponentActivity() {
             MapKitFactory.initialize(this)
         }
 
+        MMKVDb.instance.initializeStorage(this)
+
         appUpdater = AppUpdateHelper(this)
 
-//        if (ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
-//            ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.WRITE_EXTERNAL_STORAGE), REQUEST_CODE)
-//        }
-
-//        App updater
 
         registerReceiver(timeTickReciever, IntentFilter(Intent.ACTION_TIME_TICK))
-
-//        val pingWorkManager = PeriodicWorkRequestBuilder<PingServiceWorker>(15, TimeUnit.SECONDS).build()
-//        WorkManager.getInstance(this).enqueueUniquePeriodicWork("PingServerWork", ExistingPeriodicWorkPolicy.KEEP, pingWorkManager)
-//        ActivityCompat.requestPermissions(
-//            this, arrayOf(Manifest.permission.WRITE_EXTERNAL_STORAGE, Manifest.permission.READ_EXTERNAL_STORAGE, Manifest.permission.POST_NOTIFICATIONS), 23
-//        )
 
         enableEdgeToEdge()
         setContent {
@@ -180,9 +180,19 @@ fun Navigator(
             BackHandler(enabled = true) {
                 activity?.finish()
             }
-            PhoneInputScreen(navigateTo = {
-                navigateTo(Routes.Auth.Code)
-            }, viewmodel = authViewModel)
+            Scaffold (
+                topBar = {
+                    Row(Modifier.fillMaxWidth().padding(horizontal = 10.dp), Arrangement.End) {
+                        ActiveButton(onClick = { navigateTo(Routes.Settings) }, text = "Настройки")
+                    }
+                }
+            ){
+                Box(modifier = Modifier.padding(it)) {
+                    PhoneInputScreen(navigateTo = {
+                        navigateTo(Routes.Auth.Code)
+                    }, viewmodel = authViewModel)
+                }
+            }
         }
         composable(Routes.Auth.Code.route) {
             BackHandler(enabled = true) {

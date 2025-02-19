@@ -10,10 +10,13 @@ import androidx.lifecycle.ViewModel
 import com.example.mpdriver.data.api.RetrofitClient
 import com.example.mpdriver.data.api.RetrofitUpdateApi
 import com.example.mpdriver.data.database.DatabaseHelper
+import com.example.mpdriver.data.database.MMKVDb
+import com.example.mpdriver.data.database.Tables
 import com.example.mpdriver.variables.VC
+import com.tencent.mmkv.MMKV
 import java.sql.SQLException
 
-open class BaseViewModel: ViewModel() {
+open class BaseViewModel : ViewModel() {
     internal val VERSION_CODE = VC
 
     internal val api = RetrofitClient.api
@@ -23,62 +26,36 @@ open class BaseViewModel: ViewModel() {
 
     fun dropAccessToken() {
         accessToken.value = null
-        if (checkDBInstance()) {
-            try {
-                db!!.execSQL("delete from preferences where id=1")
-            }
-            catch (e: SQLException) {
-                Log.e("viewmodel_dropAccessToken", "dropAccessToken: ${e.message}")
-                return
-            }
+        try {
+            Tables.AccessToken.deleteValue()
+            Tables.Tasks.listValues().forEach { Tables.Tasks.deleteValue(it.id) }
+        } catch (e: Exception) {
+            Log.e("viewmodel_dropAccessToken", "dropAccessToken: ${e.message}")
         }
     }
 
     fun setAccessToken(token: String) {
         accessToken.value = token
-
-        if (checkDBInstance()) {
-            try {
-                db!!.execSQL("""delete from preferences where id = 1""")
-                db!!.execSQL("""insert into preferences (id, p_key, p_val) values (1, 'access_token', '${accessToken.value}')""")
-
-                Log.i("viewModel_setAccessToken", "access_token has been inserted into preferences table")
-
-                return
-            }
-            catch (e: SQLException) {
-                Log.e("viewModel_setAccessToken", "setAccessToken: ${e.message}", )
-            }
-
+        try {
+            Tables.AccessToken.setValue(token)
+        } catch (e: Exception) {
+            Log.e("viewModel_setAccessToken", "setAccessToken: ${e.message}")
         }
-        Log.e("viewModel_setAccessToken", "access_token has not been inserted into preferences table, database instance is null.")
+
     }
 
     fun initAccessToken() {
-        if (!checkDBInstance()) {
-            Log.w("viewmodel_initAccessToken", "initAccessToken: Can not init access token. No Database instance")
-            return
+
+        try {
+            val token = Tables.AccessToken.getValue()
+
+            token?.let {
+                setAccessToken(it)
+            }
+        } catch (e: Exception) {
+            Log.e("viewmodel_initAccessToken", "initAccessToken: ${e.message}")
         }
 
-        var accessTokenData: String? = null
-
-        val cursor = db?.rawQuery("select p_val from preferences where id = 1", null)
-        if (cursor?.moveToFirst() == true) {
-            do {
-                accessTokenData = cursor.getString(0)
-            } while (cursor.moveToNext())
-        }
-        cursor?.close()
-
-        if (accessTokenData != null) {
-            setAccessToken(accessTokenData)
-        }
-    }
-
-
-
-    fun checkDBInstance(): Boolean {
-        return db != null
     }
 
     fun generateSessionHeader(): String {
@@ -86,10 +63,11 @@ open class BaseViewModel: ViewModel() {
     }
 
     fun initializeDatabase(context: Context) {
+        MMKVDb.instance.initializeStorage(context)
         db = DatabaseHelper.newInstance(context).writableDatabase
     }
 
     companion object {
-        val accessToken =  MutableLiveData<String?>(null)
+        val accessToken = MutableLiveData<String?>(null)
     }
 }

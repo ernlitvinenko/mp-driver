@@ -3,6 +3,7 @@ package com.example.mpdriver.viewmodels
 import android.util.Log
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.map
+import com.example.mpdriver.data.database.Tables
 import com.example.mpdriver.data.models.AppEventKinds
 import com.example.mpdriver.data.models.AppEventResponse
 import com.example.mpdriver.data.models.AppNote
@@ -13,6 +14,7 @@ import com.example.mpdriver.data.models.TaskStatus
 import com.example.mpdriver.variables.Route
 import com.example.mpdriver.variables.Routes
 import com.example.mpdriver.variables.datetimeFormatFrom
+import kotlinx.coroutines.coroutineScope
 import kotlinx.datetime.Clock
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone
@@ -36,7 +38,7 @@ class MainViewModel : BaseViewModel() {
         MutableLiveData()
     }
 
-    val activeRoute: MutableLiveData<Route>  by lazy {
+    val activeRoute: MutableLiveData<Route> by lazy {
         MutableLiveData(Routes.Home.Feed)
     }
 
@@ -70,21 +72,38 @@ class MainViewModel : BaseViewModel() {
 
     suspend fun fetchTaskData() {
         try {
-            val tasksData = api.getTasks(
-                generateSessionHeader(), Clock.System.now().toLocalDateTime(
-                    TimeZone.currentSystemDefault()
-                ).format(datetimeFormatFrom)
-            )
-            Log.d("fetchTaskData", "fetchTaskData: ${tasksData.appTasks}")
-            tasksData.appTasks?.let {
-                tasks.value = it
+            val internalData = Tables.Tasks.listValues()
+            tasks.value = internalData
+
+
+            coroutineScope {
+                val tasksData = api.getTasks(
+                    generateSessionHeader(), Clock.System.now().toLocalDateTime(
+                        TimeZone.currentSystemDefault()
+                    ).format(datetimeFormatFrom)
+                )
+                Log.d("fetchTaskData", "fetchTaskData: ${tasksData.appTasks}")
+
+
+                tasksData.appTasks?.let { list ->
+
+                    Tables.Tasks.listValues().forEach {
+                        Tables.Tasks.deleteValue(it.id)
+                    }
+
+                    list.forEach {
+                        Tables.Tasks.setValue(it.id, it)
+                    }
+                    tasks.value = list
+                }
+                tasksData.events?.let {
+                    events.value = it
+                }
+                tasksData.notes?.let {
+                    notes.value = it
+                }
             }
-            tasksData.events?.let {
-                events.value = it
-            }
-            tasksData.notes?.let {
-                notes.value = it
-            }
+
         } catch (e: HttpException) {
             Log.e("fetchTaskData", "Error on fetching tasks: ${e.message}")
             Log.e("fetchTaskData", "Status code: ${e.code()}")
@@ -92,9 +111,10 @@ class MainViewModel : BaseViewModel() {
             when (e.code()) {
                 401 -> dropAccessToken()
             }
-        }
-        catch (e: SocketTimeoutException) {
-            Log.e("fetchTaskData", "fetchTaskData: error on fetching tasks: ${e.message}", )
+        } catch (e: SocketTimeoutException) {
+            Log.e("fetchTaskData", "fetchTaskData: error on fetching tasks: ${e.message}")
+        } catch (e: Exception) {
+            Log.e("fetchTaskData", "fetchTaskData() returned: ${e.message}")
         }
     }
 
@@ -110,15 +130,16 @@ class MainViewModel : BaseViewModel() {
                     MpdSetAppEventsRequest(
                         task?.id?.toString(),
                         kind = AppEventKinds.CreateUserEvent,
-                        eventData = listOf( eventData),
+                        eventData = listOf(eventData),
                         dateTime = datetime?.format(datetimeFormatFrom)
                             ?: Clock.System.now().toLocalDateTime(
-                                TimeZone.currentSystemDefault()).format(datetimeFormatFrom)
+                                TimeZone.currentSystemDefault()
+                            ).format(datetimeFormatFrom)
                     )
                 )
             )
         } catch (e: HttpException) {
-            Log.w("AddEventException", "addEvent: ${e.message()}\nStatus Code: ${e.code()}}", )
+            Log.w("AddEventException", "addEvent: ${e.message()}\nStatus Code: ${e.code()}}")
         }
     }
 
@@ -131,13 +152,59 @@ class MainViewModel : BaseViewModel() {
     }
 
     private fun buildRequestSchemeItem(
-        recId: Long,
+        task: AppTask,
         status: EventParameters,
         datetime: LocalDateTime,
         errorText: String? = null
     ): MpdSetAppEventsRequest {
+
+        task.status = when (status) {
+            EventParameters.NewTaskStatus.Completed -> TaskStatus.COMPLETED
+            EventParameters.NewTaskStatus.InProgress -> TaskStatus.IN_PROGRESS
+            EventParameters.NewTaskStatus.Cancelled -> TaskStatus.CANCELLED
+            else -> TaskStatus.NOT_DEFINED
+        }
+
+        when (task.status) {
+            TaskStatus.IN_PROGRESS -> {
+                task.startFact = datetime.format(datetimeFormatFrom)
+            }
+
+            TaskStatus.COMPLETED -> {
+                task.endFact = datetime.format(datetimeFormatFrom)
+            }
+
+            TaskStatus.CANCELLED -> {
+                task.endFact = datetime.format(datetimeFormatFrom)
+            }
+
+            else -> {}
+        }
+
+
+        val parent = findParentTask(task.id)
+
+        parent?.let { p ->
+            p.subtasks = p.subtasks?.map { e ->
+                if (e.id == task.id) {
+                    return@map task
+                }
+                return@map e
+            }
+
+            Tables.Tasks.setValue(parent.id, parent)
+        }
+
+        if (parent == null) {
+            Tables.Tasks.setValue(task.id, task)
+        }
+
+
+
+
+
         return if (errorText == null) MpdSetAppEventsRequest(
-            recId.toString(),
+            task.id.toString(),
             AppEventKinds.ChangeTask,
             eventData = listOf(
                 mutableMapOf(
@@ -146,7 +213,7 @@ class MainViewModel : BaseViewModel() {
             ),
             dateTime = datetime.format(datetimeFormatFrom)
         ) else MpdSetAppEventsRequest(
-            recId.toString(),
+            task.id.toString(),
             AppEventKinds.ChangeTask,
             eventData = listOf(
                 mutableMapOf(
@@ -159,9 +226,10 @@ class MainViewModel : BaseViewModel() {
     }
 
 
-    private fun grabNextSubtask(parent: AppTask, current: AppTask): AppTask {
+    private fun grabNextSubtask(parent: AppTask, current: AppTask): AppTask? {
         val currentIndex = parent.subtasks?.indexOfFirst { current.id == it.id }!!
-        return parent.subtasks[currentIndex + 1]
+        val sbts = parent.subtasks?.let { it.map { e -> e } }
+        return sbts?.get(currentIndex + 1)
     }
 
 
@@ -170,9 +238,9 @@ class MainViewModel : BaseViewModel() {
         datetime: LocalDateTime
     ): List<MpdSetAppEventsRequest> {
         return mutableListOf(
-            buildRequestSchemeItem(task.id, EventParameters.NewTaskStatus.InProgress, datetime),
+            buildRequestSchemeItem(task, EventParameters.NewTaskStatus.InProgress, datetime),
             buildRequestSchemeItem(
-                task.subtasks!!.first().id,
+                task.subtasks!!.first(),
                 EventParameters.NewTaskStatus.InProgress,
                 datetime
             )
@@ -186,18 +254,18 @@ class MainViewModel : BaseViewModel() {
         datetime: LocalDateTime
     ): List<MpdSetAppEventsRequest> {
         val subtaskCount = parent.subtasks?.count()!!
-        val index = parent.subtasks.indexOfFirst { current.id == it.id }
+        val index = parent.subtasks!!.indexOfFirst { current.id == it.id }
 
         return when (index) {
             subtaskCount - 1 -> {
                 listOf(
                     buildRequestSchemeItem(
-                        current.id,
+                        current,
                         EventParameters.NewTaskStatus.Completed,
                         datetime
                     ),
                     buildRequestSchemeItem(
-                        parent.id,
+                        parent,
                         EventParameters.NewTaskStatus.Completed,
                         datetime
                     ),
@@ -207,12 +275,12 @@ class MainViewModel : BaseViewModel() {
             else -> {
                 listOf(
                     buildRequestSchemeItem(
-                        current.id,
+                        current,
                         EventParameters.NewTaskStatus.Completed,
                         datetime
                     ),
                     buildRequestSchemeItem(
-                        grabNextSubtask(parent, current).id,
+                        grabNextSubtask(parent, current)!!,
                         EventParameters.NewTaskStatus.InProgress,
                         datetime
                     ),
@@ -228,19 +296,19 @@ class MainViewModel : BaseViewModel() {
         errorText: String
     ): List<MpdSetAppEventsRequest> {
         val subtaskCount = parent.subtasks?.count()!!
-        val index = parent.subtasks.indexOfFirst { current.id == it.id }
+        val index = parent.subtasks!!.indexOfFirst { current.id == it.id }
 
         return when (index) {
             subtaskCount - 1 -> {
                 listOf(
                     buildRequestSchemeItem(
-                        current.id,
+                        current,
                         EventParameters.NewTaskStatus.Cancelled,
                         datetime,
                         errorText
                     ),
                     buildRequestSchemeItem(
-                        parent.id,
+                        parent,
                         EventParameters.NewTaskStatus.Completed,
                         datetime
                     )
@@ -250,13 +318,13 @@ class MainViewModel : BaseViewModel() {
             else -> {
                 listOf(
                     buildRequestSchemeItem(
-                        current.id,
+                        current,
                         EventParameters.NewTaskStatus.Cancelled,
                         datetime,
                         errorText
                     ),
                     buildRequestSchemeItem(
-                        grabNextSubtask(parent, current).id,
+                        grabNextSubtask(parent, current)!!,
                         EventParameters.NewTaskStatus.InProgress,
                         datetime
                     )
@@ -301,7 +369,12 @@ class MainViewModel : BaseViewModel() {
 
         }
 
-        api.createEvent(generateSessionHeader(), requestData)
+        try {
+            api.createEvent(generateSessionHeader(), requestData)
+        } catch (e: Exception) {
+            Log.e("changetaskOnline", "changeTask: ${e.message}")
+        }
+
     }
 
     suspend fun changeTask(

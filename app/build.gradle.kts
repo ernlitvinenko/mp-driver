@@ -17,7 +17,7 @@ android {
         }
         exclude("lib/x86/libmaps-mobile.so")
         exclude("lib/x86_64/libmaps-mobile.so")
-//        exclude("lib/arm64-v8a/libmaps-mobile.so")
+        exclude("lib/x86_64/libmmkv.so")
         exclude("lib/armeabi-v7a/libmaps-mobile.so")
     }
 
@@ -94,6 +94,9 @@ dependencies {
     implementation(libs.kotlinx.datetime)
     implementation(libs.yandex.maps)
     implementation(libs.kotlin.coroutines)
+
+    // Database
+    implementation(libs.mmkv)
     implementation("com.google.accompanist:accompanist-permissions:0.34.0")
     implementation("com.squareup.retrofit2:retrofit:2.11.0") // Retrofit
     implementation("com.squareup.retrofit2:converter-gson:2.9.0") // Конвертер JSON
