@@ -1,6 +1,5 @@
 package com.example.mpdriver.variables
 
-import android.util.Log
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.format.DateTimeFormat
 import kotlinx.datetime.format.Padding
@@ -8,8 +7,8 @@ import kotlinx.datetime.format.byUnicodePattern
 import kotlinx.datetime.format.char
 import java.time.format.DateTimeFormatter
 
-val version = "0.0.1dev3.0"
-val VC = 11
+val version = "0.0.1alpha"
+val VC = 17
 
 class PersonalDatetimeFormat(private val pattern: String) {
     fun toJava(): DateTimeFormatter {
@@ -39,4 +38,3 @@ val datetimeFormatFrom = LocalDateTime.Format {
 val timeFormat = PersonalDatetimeFormat("HH:mm")
 val dateFormat = PersonalDatetimeFormat("dd.MM.yyyy")
 
-val datetimeFormatFromJava = DateTimeFormatter.ofPattern("dd.MM.yyyy H:mm:ss")

@@ -50,12 +50,12 @@ object RetrofitClient {
             val EP = Tables.ServerAPIBaseURL.getValue()
 
             EP?.let {
-                return "http://${it}/datasnapJDE/rest/TsmAPIvJ/"
+                return "https://${it}/driver/"
             }
 
-            Tables.ServerAPIBaseURL.setValue("10.2.100.110:30033")
+            Tables.ServerAPIBaseURL.setValue("mp-srv.jde.ru")
 
-            return "http://10.2.100.110:30033/datasnapJDE/rest/TsmAPIvJ/"
+            return "https://mp-srv.jde.ru/driver/"
         }
     val api: ApiService by lazy {
         val retrofit = Retrofit.Builder()
@@ -72,11 +72,11 @@ data class UpdateChangeLogResponse(
     val id: String,
     val versionCode: Int,
     val description: String,
-    val link: String
+    var link: String
 )
 
 interface UpdateService {
-    @GET("updates/{appId}/update-changelog.json")
+    @GET("{appId}/update-changelog.json")
     suspend fun getUpdates(@Path("appId") applicationId: String): UpdateChangeLogResponse
 }
 
@@ -86,12 +86,12 @@ object RetrofitUpdateApi {
             val EP = Tables.UpdatesAPIBaseUrl.getValue()
 
             EP?.let {
-                return "http://$it/"
+                return "https://$it/updates/admin/"
             }
 
-            Tables.UpdatesAPIBaseUrl.setValue("10.2.101.91:8005")
+            Tables.UpdatesAPIBaseUrl.setValue("mp-srv.jde.ru")
 
-            return "http://10.2.101.91:8005/"
+            return "https://mp-srv.jde.ru/updates/admin/"
         }
 
     val api: UpdateService by lazy {

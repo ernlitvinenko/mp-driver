@@ -1,9 +1,9 @@
 package com.example.mpdriver.viewmodels
 
-import android.app.Application
 import android.content.Context
 import android.util.Log
 import com.example.mpdriver.data.api.UpdateChangeLogResponse
+import com.example.mpdriver.data.database.Tables
 
 class UpdateViewModel: BaseViewModel() {
 
@@ -12,6 +12,18 @@ class UpdateViewModel: BaseViewModel() {
 
         if (data.versionCode > VERSION_CODE) {
             Log.d("updates",  "Version: ${data.id} ${data.versionCode} ${data.link} ${data.description}")
+            val dbVal = Tables.UpdatesAPIBaseUrl.getValue()
+            val linkEP: String
+
+            if (dbVal != null) {
+                linkEP = "https://${dbVal}"
+            }
+            else {
+                linkEP = "https://mp-srv.jde.ru"
+            }
+
+            data.link = "${linkEP}${data.link}"
+            Log.d("updates", data.link)
             return data
         }
         return null
