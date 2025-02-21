@@ -1,6 +1,5 @@
 package com.example.mpdriver.viewmodels
 
-import android.app.Application
 import android.content.Context
 import android.util.Log
 import com.example.mpdriver.data.api.UpdateChangeLogResponse
@@ -23,7 +22,8 @@ class UpdateViewModel: BaseViewModel() {
                 linkEP = "https://mp-srv.jde.ru"
             }
 
-            data.link = "${linkEP}/${data.link}"
+            data.link = "${linkEP}${data.link}"
+            Log.d("updates", data.link)
             return data
         }
         return null
