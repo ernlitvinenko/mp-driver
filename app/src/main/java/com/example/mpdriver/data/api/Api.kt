@@ -1,6 +1,8 @@
 package com.example.mpdriver.data.api
 
+import android.util.Log
 import androidx.annotation.Keep
+import com.example.mpdriver.BuildConfig
 import com.example.mpdriver.data.database.Tables
 import com.example.mpdriver.data.models.*
 import retrofit2.Retrofit
@@ -47,15 +49,22 @@ interface ApiService {
 object RetrofitClient {
     private val BASE_URL: String
         get() {
+
+            val buildVariant = BuildConfig.BUILD_TYPE
+
+            if (buildVariant == "debug") {
+                return "http://10.2.100.110:30033/datasnapJDE/rest/TsmAPIvJ/"
+            }
+
+
             val EP = Tables.ServerAPIBaseURL.getValue()
 
             EP?.let {
                 return "https://${it}/driver/"
             }
-
             Tables.ServerAPIBaseURL.setValue("mp-srv.jde.ru")
-
             return "https://mp-srv.jde.ru/driver/"
+
         }
     val api: ApiService by lazy {
         val retrofit = Retrofit.Builder()
