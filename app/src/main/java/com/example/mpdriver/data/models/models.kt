@@ -86,7 +86,8 @@ data class AppTask(
     var subtasks: List<AppTask>?,
     val route: AppMarshResponse?,
 
-    val station: AppMstResponse?
+    val station: AppMstResponse?,
+    val param: List<MutableMap<String, String>>? = null
 )
 @Keep
 data class GetMPD_APP_TASK_RESPONSE(

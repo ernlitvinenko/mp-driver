@@ -126,7 +126,9 @@ fun TaskComponent(
         ),
         events = null,
         subtasks = null,
-        station = null
+        station = null,
+        param = null
+
     ),
     children: @Composable() () -> Unit = {},
     footerButton: @Composable () -> Unit = {}

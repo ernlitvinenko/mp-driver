@@ -90,7 +90,9 @@ fun Subtask(
             id = 2252083418031070,
             name = "Москва-Южный",
             location = AppLocationResponse(lat = 55.48954f, lon = 37.75279f)
-        )
+        ),
+        param = null
+
     ),
     model: MainViewModel,
     footerButton: @Composable () -> Unit = {}
