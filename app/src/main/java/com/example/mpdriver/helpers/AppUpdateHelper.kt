@@ -69,11 +69,12 @@ class AppUpdateHelper(private val context: Context) {
             context.registerReceiver(
                 downloadCompleteReceiver,
                 IntentFilter(DownloadManager.ACTION_DOWNLOAD_COMPLETE),
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
-                    Context.RECEIVER_NOT_EXPORTED // Use NOT_EXPORTED for better security
-                } else {
-                    Context.RECEIVER_EXPORTED
-                }
+                Context.RECEIVER_EXPORTED
+//                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+//                    Context.RECEIVER_NOT_EXPORTED // Use NOT_EXPORTED for better security
+//                } else {
+//                    Context.RECEIVER_EXPORTED
+//                }
             )
         } else {
             context.registerReceiver(

@@ -4,10 +4,12 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -17,6 +19,7 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -24,7 +27,11 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.focus.focusModifier
+import androidx.compose.ui.graphics.Canvas
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
@@ -45,12 +52,56 @@ import kotlinx.datetime.format.byUnicodePattern
 import kotlinx.datetime.toInstant
 import kotlinx.datetime.until
 import kotlin.math.abs
+import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.wrapContentHeight
+import androidx.compose.foundation.layout.wrapContentSize
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
 
 enum class TaskColor {
     DANGER,
     SUCCESS,
     WARNING,
     DEFAULT
+}
+
+@Preview(showBackground = true)
+@Composable
+fun VerticalProgressBar(
+    modifier: Modifier = Modifier,
+    progress: Float = 0.9f,
+    color: Color = JDEColor.PRIMARY.color,
+    backgroundColor: Color = JDEColor.BG_GRAY.color,
+    size: Size = Size(width = 3f, height = 100f),
+    strokeSize: Float = 1f,
+    strokeColor: Color = Color.Transparent
+) {
+    Canvas(
+        modifier = modifier
+            .rotate(180f)
+            .size(size.width.dp, size.height.dp)
+            .border(width = strokeSize.dp, color = strokeColor)
+            .fillMaxHeight()
+    ) {
+        // Progress made
+        drawRect(
+            color = color,
+            size = Size(size.width.dp.toPx(), height = (progress * size.height).dp.toPx()),
+            topLeft = Offset(0.dp.toPx(), ((1 - progress) * size.height).dp.toPx())
+        )
+        // background
+        drawRect(
+            color = backgroundColor,
+            size = Size(
+                width = size.width.dp.toPx(),
+                height = ((1 - progress) * size.height).dp.toPx()
+            ),
+        )
+    }
 }
 
 @Preview(showBackground = true)
@@ -65,7 +116,7 @@ fun TaskComponent(
         endFact = null,
         status = TaskStatus.COMPLETED,
         taskType = TaskType.MOV_MARSH,
-        text = "Москва-Южный->Нижний Новгород->Чебоксары->Казань->Пермь->Екатеринбург",
+        text = "Москва-Южный->Нижний Новгород->Чебоксары->Казань->Пермь->Екатеринбург->Москва-Южный->Нижний Новгород->Чебоксары->Казань->Пермь->Екатеринбург",
         route = AppMarshResponse(
             id = 2252182222363240,
             temperatureProperty = MarshTemperatureProperty.COLD,
@@ -75,7 +126,9 @@ fun TaskComponent(
         ),
         events = null,
         subtasks = null,
-        station = null
+        station = null,
+        param = null
+
     ),
     children: @Composable() () -> Unit = {},
     footerButton: @Composable () -> Unit = {}
@@ -122,6 +175,17 @@ fun TaskComponent(
         TaskStatus.NOT_DEFINED -> if (isDelay) TaskColor.DANGER else TaskColor.DEFAULT
     }
 
+    val cities = taskData.text.split("->")
+    var completedTasks =
+        (taskData.subtasks?.count { it.status == TaskStatus.COMPLETED || it.status == TaskStatus.CANCELLED })?.toFloat()
+    val progress = when (completedTasks) {
+        null -> .5f
+        else -> {
+            completedTasks / taskData.subtasks!!.size
+        }
+    }
+    progress!!
+
 
     return CardComponent(
         modifier, when (status) {
@@ -131,27 +195,65 @@ fun TaskComponent(
             TaskColor.WARNING -> JDEColor.WARNING
         }
     ) {
-        Row(
-            Modifier
-                .fillMaxWidth()
-                .padding(bottom = 15.dp),
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
+
+
+        Column {
             Text(
-                modifier = Modifier.weight(1f),
-                text = "Движение по маршруту\n${taskData.route?.name}",
+                modifier = Modifier,
+                text = "Движение по маршруту",
                 fontWeight = FontWeight.Bold,
                 fontSize = 20.sp
             )
-            Spacer(modifier = Modifier.width(10.dp))
 
-            IconButton(onClick = { /*TODO*/ }, modifier = Modifier.weight(0.1f)) {
-                Image(
-                    painter = painterResource(id = R.drawable.tick_default),
-                    contentDescription = "tick"
-                )
+//            Движение по маршруту stepper
+            Box(
+                Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 20.dp)
+            ) {
+                Column(
+                    Modifier
+                        .align(Alignment.TopStart)
+                        .drawBehind {
+
+
+//                    Draw BG
+                            drawLine(
+                                JDEColor.BG_GRAY.color,
+                                Offset(0f, 0f),
+                                Offset(0f, size.height),
+                                7f
+                            )
+
+                            //                    draw main line
+                            drawLine(
+                                JDEColor.PRIMARY.color,
+                                Offset(0f, 0f),
+                                Offset(0f, size.height * progress.toFloat()),
+                                7f
+                            )
+
+                        }
+                        .padding(horizontal = 10.dp)
+                ) {
+                    cities.map { mst ->
+                        Text(
+                            modifier = Modifier.padding(bottom = 4.dp),
+                            text = mst,
+                            fontSize = 20.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                }
             }
         }
+//        IconButton(onClick = { /*TODO*/ }, modifier = Modifier.weight(0.1f)) {
+//            Image(
+//                painter = painterResource(id = R.drawable.tick_default),
+//                contentDescription = "tick"
+//            )
+//        }
+
         Row(Modifier.padding(bottom = 20.dp)) {
             InformationPlaceholderSmall(
                 Modifier.weight(1f),

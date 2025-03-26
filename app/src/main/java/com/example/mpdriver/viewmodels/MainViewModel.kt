@@ -23,6 +23,7 @@ import kotlinx.datetime.format
 import kotlinx.datetime.toLocalDateTime
 import retrofit2.HttpException
 import java.net.SocketTimeoutException
+import kotlin.math.sign
 import kotlin.reflect.KClass
 
 
@@ -231,7 +232,13 @@ class MainViewModel : BaseViewModel() {
     private fun grabNextSubtask(parent: AppTask, current: AppTask): AppTask? {
         val currentIndex = parent.subtasks?.indexOfFirst { current.id == it.id }!!
         val sbts = parent.subtasks?.let { it.map { e -> e } }
-        return sbts?.get(currentIndex + 1)
+        sbts?.let { subtasks ->
+            if (subtasks.size == currentIndex + 1) {
+                return null
+            }
+            return subtasks[currentIndex + 1]
+        }
+        return null
     }
 
 
@@ -255,11 +262,14 @@ class MainViewModel : BaseViewModel() {
         current: AppTask,
         datetime: LocalDateTime
     ): List<MpdSetAppEventsRequest> {
-        val subtaskCount = parent.subtasks?.count()!!
-        val index = parent.subtasks!!.indexOfFirst { current.id == it.id }
 
-        return when (index) {
-            subtaskCount - 1 -> {
+//        Проверяем, является ли подзадача последняя
+
+        val isSBTaskLast: Boolean = current.param?.find { it.get("8947") != null }?.get("8947") == "1"
+        val nextSubtask: AppTask? = grabNextSubtask(parent, current)
+
+        return when {
+            isSBTaskLast -> {
                 listOf(
                     buildRequestSchemeItem(
                         current,
@@ -274,7 +284,7 @@ class MainViewModel : BaseViewModel() {
                 )
             }
 
-            else -> {
+            nextSubtask != null -> {
                 listOf(
                     buildRequestSchemeItem(
                         current,
@@ -282,8 +292,18 @@ class MainViewModel : BaseViewModel() {
                         datetime
                     ),
                     buildRequestSchemeItem(
-                        grabNextSubtask(parent, current)!!,
+                        nextSubtask,
                         EventParameters.NewTaskStatus.InProgress,
+                        datetime
+                    ),
+                )
+            }
+
+            else -> {
+                listOf(
+                    buildRequestSchemeItem(
+                        current,
+                        EventParameters.NewTaskStatus.Completed,
                         datetime
                     ),
                 )
@@ -297,11 +317,11 @@ class MainViewModel : BaseViewModel() {
         datetime: LocalDateTime,
         errorText: String
     ): List<MpdSetAppEventsRequest> {
-        val subtaskCount = parent.subtasks?.count()!!
-        val index = parent.subtasks!!.indexOfFirst { current.id == it.id }
+        val isSBTaskLast: Boolean = current.param?.get(0)?.get("8947") == "1"
+        val nextSubtask: AppTask? = grabNextSubtask(parent, current)
 
-        return when (index) {
-            subtaskCount - 1 -> {
+        return when {
+            isSBTaskLast -> {
                 listOf(
                     buildRequestSchemeItem(
                         current,
@@ -317,7 +337,7 @@ class MainViewModel : BaseViewModel() {
                 )
             }
 
-            else -> {
+            nextSubtask != null -> {
                 listOf(
                     buildRequestSchemeItem(
                         current,
@@ -326,9 +346,20 @@ class MainViewModel : BaseViewModel() {
                         errorText
                     ),
                     buildRequestSchemeItem(
-                        grabNextSubtask(parent, current)!!,
+                        nextSubtask,
                         EventParameters.NewTaskStatus.InProgress,
                         datetime
+                    )
+                )
+            }
+
+            else -> {
+                listOf(
+                    buildRequestSchemeItem(
+                        current,
+                        EventParameters.NewTaskStatus.Cancelled,
+                        datetime,
+                        errorText
                     )
                 )
             }
@@ -378,7 +409,8 @@ class MainViewModel : BaseViewModel() {
             val strval = Tables.Updates.getValue()
             val data = requestData.map { it }.toMutableList()
             strval?.let {
-                Gson().fromJson(strval, Array<MpdSetAppEventsRequest>::class.java).forEach{data.add(it)}
+                Gson().fromJson(strval, Array<MpdSetAppEventsRequest>::class.java)
+                    .forEach { data.add(it) }
             }
             Tables.Updates.setValue(Gson().toJson(data))
         }
@@ -397,5 +429,4 @@ class MainViewModel : BaseViewModel() {
         }?.find { sbt -> sbt.id == taskId }
         changeTask(task!!, status, datetime, errorText)
     }
-
 }
