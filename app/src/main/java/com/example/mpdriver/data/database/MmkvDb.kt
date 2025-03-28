@@ -32,6 +32,7 @@ sealed class Tables {
     data object AccessToken : Table("access_token")
     data object ServerAPIBaseURL : Table("server_api_base_url")
     data object UpdatesAPIBaseUrl : Table("updates_api_base_url")
+    data object UserInfo: Table("user_info")
     data object Tasks : Table("tasks") {
         fun listValues():List<AppTask> {
             val regex = """${pkey}\/\d+""".toRegex()

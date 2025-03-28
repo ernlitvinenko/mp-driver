@@ -67,18 +67,36 @@ class MainViewModel : BaseViewModel() {
         }
     }
 
+    val currentUserName: MutableLiveData<String> by lazy {
+        MutableLiveData<String>("")
+    }
 
     suspend fun isAuthorized(): Boolean {
         fetchTaskData()
         return accessToken.value != null && accessToken.value != ""
     }
 
+    suspend fun fetchUserName() {
+        try {
+            val internalData = Tables.UserInfo.getValue()
+            internalData?.let {
+                currentUserName.value = internalData
+            }
+            val data = api.getUsername(generateSessionHeader())
+            Log.d("fetchUserName", "fetchUserName: $data")
+            data?.let {
+                currentUserName.value = data
+                Tables.UserInfo.setValue(data)
+            }
+        } catch (e : Exception) {
+            Log.e("FetchUserName", "fetchUserName error: $e ${e.message}")
+        }
+    }
+
     suspend fun fetchTaskData() {
         try {
             val internalData = Tables.Tasks.listValues()
             tasks.value = internalData
-
-
             coroutineScope {
                 val tasksData = api.getTasks(
                     generateSessionHeader(), Clock.System.now().toLocalDateTime(
