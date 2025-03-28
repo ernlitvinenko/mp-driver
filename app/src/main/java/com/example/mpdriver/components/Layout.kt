@@ -33,6 +33,7 @@ import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -78,6 +79,7 @@ fun <T> Layout(
     state: LazyListState = rememberLazyListState(),
     itemComponent: @Composable (T) -> Unit
 ) {
+
     LazyColumn(
         modifier
             .fillMaxWidth()
@@ -99,6 +101,24 @@ fun <T> Layout(
         item {
             footer()
         }
+    }
+
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun <T> RefreshableLayout(
+    modifier: Modifier = Modifier,
+    header: @Composable () -> Unit = {},
+    footer: @Composable () -> Unit = {},
+    dataList: List<T>,
+    state: LazyListState = rememberLazyListState(),
+    isRefreshing: Boolean = false,
+    onRefresh: () -> Unit = {},
+    itemComponent: @Composable (T) -> Unit
+) {
+    PullToRefreshBox(isRefreshing = isRefreshing, onRefresh = { onRefresh() }) {
+       Layout(modifier, header, footer, dataList, state, itemComponent)
     }
 }
 
@@ -197,21 +217,31 @@ fun HomeScreenLayout(
                 )
 //                GET CURRENT USER NAME
 
-                Row(modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(top = 32.dp, bottom = 8.dp),
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 32.dp, bottom = 8.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Box(modifier = Modifier
-                        .size(64.dp)
-                        .clip(CircleShape)
-                        .background(Color.Gray.copy(alpha = .4f))){
-                        Text(text = mainViewModel.currentUserName.value?.split(" ")?.getOrNull(1)?.replace(".", "")?: "", modifier = Modifier.align(
-                            Alignment.Center), fontWeight = FontWeight.Bold, color = Color.White, fontSize = 18.sp
+                    Box(
+                        modifier = Modifier
+                            .size(64.dp)
+                            .clip(CircleShape)
+                            .background(Color.Gray.copy(alpha = .4f))
+                    ) {
+                        Text(
+                            text = mainViewModel.currentUserName.value?.split(" ")?.getOrNull(1)
+                                ?.replace(".", "") ?: "", modifier = Modifier.align(
+                                Alignment.Center
+                            ), fontWeight = FontWeight.Bold, color = Color.White, fontSize = 18.sp
                         )
                     }
                     Spacer(modifier = Modifier.width(8.dp))
-                    Text(mainViewModel.currentUserName.value ?: "", textAlign = TextAlign.Center, fontSize = 18.sp)
+                    Text(
+                        mainViewModel.currentUserName.value ?: "",
+                        textAlign = TextAlign.Center,
+                        fontSize = 18.sp
+                    )
 
                 }
 
@@ -271,7 +301,7 @@ fun HomeScreenLayout(
                         Text(text = "Установка Яндекс навигатора", fontWeight = FontWeight.Bold)
                     }
                 }
-                
+
                 IteractionButton(onClick = { navigateTo(Routes.Settings) }) {
                     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center) {
                         Text(text = "Расширенные настройки", fontWeight = FontWeight.Bold)
@@ -315,10 +345,12 @@ fun HomeScreenLayout(
                         fontWeight = FontWeight.Bold,
                         fontSize = 20.sp
                     )
-                    LinearProgressIndicator(progress = { downloadProgress },
+                    LinearProgressIndicator(
+                        progress = { downloadProgress },
                         Modifier
                             .padding(5.dp)
-                            .fillMaxWidth(), color = JDEColor.PRIMARY.color)
+                            .fillMaxWidth(), color = JDEColor.PRIMARY.color
+                    )
                 } else {
                     Text(
                         if (sheetUpdateData != null) "Доступно новое обновление" else "Нет новых обновлений",
