@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ButtonDefaults
@@ -85,7 +86,8 @@ fun Footer(
             .fillMaxWidth()
             .background(Color.White)
             .clip(RoundedCornerShape(bottomStart = 10.dp, bottomEnd = 10.dp))
-            .padding(horizontal = 5.dp),
+            .padding(horizontal = 5.dp).navigationBarsPadding()
+        ,
         verticalAlignment = Alignment.CenterVertically
     ) {
         Row(

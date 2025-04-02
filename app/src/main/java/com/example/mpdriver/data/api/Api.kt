@@ -5,8 +5,11 @@ import androidx.annotation.Keep
 import com.example.mpdriver.BuildConfig
 import com.example.mpdriver.data.database.Tables
 import com.example.mpdriver.data.models.*
+import com.google.gson.GsonBuilder
+import com.google.gson.Strictness
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
+import retrofit2.converter.scalars.ScalarsConverterFactory
 import retrofit2.http.Body
 import retrofit2.http.GET
 import retrofit2.http.Header
@@ -39,7 +42,7 @@ interface ApiService {
     ): MpdSetAppEventsResponse
 
     @GET("GetMPDSotrInf")
-    suspend fun getUsername(@Header("Pragma") dssession: String): String
+    suspend fun getUsername(@Header("Pragma") dssession: String): String?
 
     @GET("GetMPDServerTime")
     suspend fun getServerTime(@Header("Pragma") dssession: String): String
@@ -66,9 +69,11 @@ object RetrofitClient {
             return "https://mp-srv.jde.ru/driver/"
 
         }
+//    val builder = GsonBuilder().setStrictness(Strictness.LENIENT).create()
     val api: ApiService by lazy {
         val retrofit = Retrofit.Builder()
             .baseUrl(BASE_URL)
+            .addConverterFactory(ScalarsConverterFactory.create())
             .addConverterFactory(GsonConverterFactory.create())
             .build()
         retrofit.create(ApiService::class.java)

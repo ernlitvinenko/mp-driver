@@ -1,5 +1,6 @@
 package com.example.mpdriver.components
 
+import android.util.Log
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.border
@@ -53,14 +54,27 @@ import kotlinx.datetime.toInstant
 import kotlinx.datetime.until
 import kotlin.math.abs
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
+import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.layout.wrapContentSize
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.rememberModalBottomSheetState
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 enum class TaskColor {
     DANGER,
@@ -104,10 +118,13 @@ fun VerticalProgressBar(
     }
 }
 
+@OptIn(ExperimentalFoundationApi::class, ExperimentalMaterial3Api::class)
 @Preview(showBackground = true)
 @Composable
 fun TaskComponent(
     modifier: Modifier = Modifier,
+    onClick: () -> Unit = {},
+    onClickCloseTask: () -> Unit = {},
     taskData: AppTask = AppTask(
         id = 1125900288324087,
         startPln = "10.04.2024 23:00:00",
@@ -187,8 +204,35 @@ fun TaskComponent(
     progress!!
 
 
-    return CardComponent(
-        modifier, when (status) {
+    val taskBottomSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    val coroutineScope = rememberCoroutineScope()
+    var isSheetVisible by remember {
+        mutableStateOf(false)
+    }
+
+//    Handlers
+
+    suspend fun onLongClick() {
+        taskBottomSheetState.hide()
+        isSheetVisible = true
+        delay(100)
+        taskBottomSheetState.show()
+    }
+
+    suspend fun closeSheet() {
+        taskBottomSheetState.hide()
+        withContext(Dispatchers.Main) {
+            isSheetVisible = false
+        }
+    }
+
+
+    CardComponent(
+        modifier.combinedClickable(onLongClick = {
+            coroutineScope.launch {
+                onLongClick()
+            }
+        }, onClick = {onClick()}), when (status) {
             TaskColor.DEFAULT -> JDEColor.SECONDARY
             TaskColor.SUCCESS -> JDEColor.SUCCESS
             TaskColor.DANGER -> JDEColor.PRIMARY
@@ -404,7 +448,26 @@ fun TaskComponent(
             }
         }
         footerButton()
-
-
     }
+
+
+    if (isSheetVisible) {
+        ModalBottomSheet(onDismissRequest = {
+            coroutineScope.launch {
+                closeSheet()
+            }
+        }, sheetState = taskBottomSheetState, containerColor = Color.White) {
+            Column(
+                Modifier
+                    .defaultMinSize(minHeight = 200.dp)
+                    .padding(horizontal = 20.dp)) {
+                Text(text = "Что вы хотите сделать с задачей?", fontSize = 24.sp, fontWeight = FontWeight.Bold)
+                Spacer(modifier = Modifier.height(20.dp))
+                JDEButton(onClick = {onClickCloseTask()}) {
+                    Text(text = "Завершить задачу")
+                }
+            }
+        }
+    }
+
 }
