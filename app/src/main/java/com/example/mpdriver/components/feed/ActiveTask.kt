@@ -8,10 +8,14 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.mpdriver.NotificationData
+import com.example.mpdriver.NotificationService
 //import com.example.mpdriver.storage.api.TaskResponse
 //import com.example.mpdriver.storage.api.apolloClient
 import com.example.mpdriver.components.EmptyList
@@ -23,6 +27,13 @@ import com.example.mpdriver.data.models.AppTask
 import com.example.mpdriver.data.models.TaskStatus
 import com.example.mpdriver.variables.Routes
 import com.example.mpdriver.viewmodels.MainViewModel
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import kotlinx.datetime.Clock
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.toLocalDateTime
 
 
 @Composable
@@ -32,6 +43,10 @@ fun ActiveTask(activeTask: AppTask? = null,
                navigateToTask: (Long) -> Unit = {}
 
 ) {
+
+    val scope = rememberCoroutineScope()
+    val context = LocalContext.current
+    val notificationService = NotificationService(context)
 
     Column(
         Modifier
@@ -48,12 +63,24 @@ fun ActiveTask(activeTask: AppTask? = null,
             fontWeight = FontWeight.Bold,
             fontSize = 18.sp
         )
+        Spacer(modifier = Modifier.height(10.dp))
 
-        IteractionButton(onClick = {
+        TaskComponent(taskData = activeTask, onClick = {
             navigateToTask(activeTask.id)
-        }) {
-            TaskComponent(taskData = activeTask)
-        }
+        }, onClickCloseTask = {
+            scope.launch {
+                model.changeTask(activeTask, status = TaskStatus.COMPLETED, datetime = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()))
+                model.fetchTaskData()
+                withContext(Dispatchers.Main) {
+                    notificationService.showNotification(
+                        NotificationData(
+                            title = "MP Водитель - Изменился статус Задачи",
+                            text = "Текущий статус подзадачи - Выполнено"
+                        )
+                    )
+                }
+            }
+        })
     }
 
     Spacer(modifier = Modifier.height(10.dp))

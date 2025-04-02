@@ -392,6 +392,10 @@ class MainViewModel : BaseViewModel() {
         errorText: String? = null
     ): List<MpdSetAppEventsRequest> {
         if (parent.id == current.id) {
+
+            if (newStatus == TaskStatus.COMPLETED) {
+                return mutableListOf(buildRequestSchemeItem(current, status = EventParameters.NewTaskStatus.Completed, datetime))
+            }
             return buildRequestDataForStartingTask(current, datetime)
         }
 
