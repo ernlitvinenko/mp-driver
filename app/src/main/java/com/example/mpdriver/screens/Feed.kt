@@ -8,6 +8,8 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -24,6 +26,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.mpdriver.NotificationData
 import com.example.mpdriver.NotificationService
 import com.example.mpdriver.components.Layout
+import com.example.mpdriver.components.RefreshableLayout
 import com.example.mpdriver.components.feed.ActiveTask
 import com.example.mpdriver.components.feed.FeedTaskDataCard
 import com.example.mpdriver.components.subtask.sheet.steps.ApiCalls
@@ -51,6 +54,7 @@ private data class FeedDataListProps(
 )
 
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun Feed(
     modifier: Modifier = Modifier,
@@ -58,11 +62,11 @@ fun Feed(
     navigateTo: (Route) -> Unit = {},
     navigateToTask: (Long) -> Unit = {},
 
-) {
+    ) {
     val context = LocalContext.current
     val notificationService = NotificationService(context)
 
-    //    Fetch active task
+//        Fetch active task
     var isLoading by remember {
         mutableStateOf(true)
     }
@@ -73,9 +77,16 @@ fun Feed(
         byUnicodePattern("dd.MM.yyyy")
     }
 
-    val  plannedTasks = model.plannedTasksLiveData.observeAsState(emptyList())
+    val plannedTasks = model.plannedTasksLiveData.observeAsState(emptyList())
     val completedTasks = model.completedTaskLiveData.observeAsState(emptyList())
     val activeTask = model.activeTaskLiveData.observeAsState()
+
+//    Handlers
+    suspend fun onRefresh() {
+        isLoading = true
+        model.fetchTaskData()
+        isLoading = false
+    }
 
 
     val dataList = listOf(
@@ -93,7 +104,7 @@ fun Feed(
             },
             buttonLabel = "Смотреть запланированные задачи",
             dateDescription = "Ближайшая",
-            handler = {navigateTo(Routes.Home.Tasks.Planned)}
+            handler = { navigateTo(Routes.Home.Tasks.Planned) }
         ),
         FeedDataListProps(
             title = "Завершенные задачи",
@@ -109,13 +120,12 @@ fun Feed(
             },
             buttonLabel = "Смотреть завершенные задачи",
             dateDescription = "Последняя",
-            handler = {navigateTo(Routes.Home.Tasks.Closed)}
+            handler = { navigateTo(Routes.Home.Tasks.Closed) }
         )
     )
 
     LaunchedEffect(Unit) {
-        model.fetchTaskData()
-        isLoading = false
+        onRefresh()
     }
 
     if (isLoading) {
@@ -128,37 +138,63 @@ fun Feed(
         }
         return
     }
-
-
-    Layout(dataList = dataList, header = {
+    RefreshableLayout(dataList = dataList, header = {
         Column {
-            ActiveTask(activeTask = activeTask.value, navigateToTask = {navigateToTask(it)}, model = model, apiCalls = object : ApiCalls {
-                override fun success(data: SuccessStepApiCallData) {
-                    coroutineScope.launch {
-                        model.changeTask(data.subtaskId, TaskStatus.COMPLETED, datetime = data.dateTime)
-                        model.fetchTaskData()
-                        withContext(Dispatchers.Main) {
-                            navigateTo(Routes.Home.Feed)
-                            notificationService.showNotification(NotificationData(title = "MP Водитель - Изменился статус подзадачи", text = "Текущий статус подзадачи - Выполнено"))
+            ActiveTask(
+                activeTask = activeTask.value,
+                navigateToTask = { navigateToTask(it) },
+                model = model,
+                apiCalls = object : ApiCalls {
+                    override fun success(data: SuccessStepApiCallData) {
+                        coroutineScope.launch {
+                            model.changeTask(
+                                data.subtaskId,
+                                TaskStatus.COMPLETED,
+                                datetime = data.dateTime
+                            )
+                            model.fetchTaskData()
+                            withContext(Dispatchers.Main) {
+                                navigateTo(Routes.Home.Feed)
+                                notificationService.showNotification(
+                                    NotificationData(
+                                        title = "MP Водитель - Изменился статус подзадачи",
+                                        text = "Текущий статус подзадачи - Выполнено"
+                                    )
+                                )
+                            }
                         }
                     }
-                }
 
-                override fun failure(data: FailureStepApiCallData) {
-                    coroutineScope.launch {
-                        model.changeTask(data.subtaskId, TaskStatus.CANCELLED, data.datetime, errorText = data.reason)
-                        model.fetchTaskData()
-                       withContext(Dispatchers.Main) {
-                            navigateTo(Routes.Home.Feed)
-                            notificationService.showNotification(NotificationData(title = "MP Водитель - Изменился статус подзадачи", text = "Текущий статус подзадачи - Отменено"))
-                       }
+                    override fun failure(data: FailureStepApiCallData) {
+                        coroutineScope.launch {
+                            model.changeTask(
+                                data.subtaskId,
+                                TaskStatus.CANCELLED,
+                                data.datetime,
+                                errorText = data.reason
+                            )
+                            model.fetchTaskData()
+                            withContext(Dispatchers.Main) {
+                                navigateTo(Routes.Home.Feed)
+                                notificationService.showNotification(
+                                    NotificationData(
+                                        title = "MP Водитель - Изменился статус подзадачи",
+                                        text = "Текущий статус подзадачи - Отменено"
+                                    )
+                                )
+                            }
+                        }
                     }
-                }
 
-            })
+                })
             Spacer(modifier = Modifier.height(20.dp))
         }
 
+
+    }, isRefreshing = isLoading, onRefresh = {
+        coroutineScope.launch {
+            onRefresh()
+        }
     }) {
         FeedTaskDataCard(
             title = it.title,

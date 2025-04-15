@@ -7,8 +7,8 @@ import kotlinx.datetime.format.byUnicodePattern
 import kotlinx.datetime.format.char
 import java.time.format.DateTimeFormatter
 
-val version = "0.0.1alpha"
-val VC = 17
+val version = "0.0.2beta1"
+val VC = 22
 
 class PersonalDatetimeFormat(private val pattern: String) {
     fun toJava(): DateTimeFormatter {

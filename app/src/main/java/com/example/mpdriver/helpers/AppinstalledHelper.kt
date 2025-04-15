@@ -1,9 +1,11 @@
 package com.example.mpdriver.helpers
 
+import android.annotation.SuppressLint
 import android.content.Context
 import android.content.pm.PackageManager
 import android.util.Log
 
+@SuppressLint("QueryPermissionsNeeded")
 fun isAppInstalled(context: Context, packageName: String): Boolean {
     return try {
         // Получаем информацию о пакете

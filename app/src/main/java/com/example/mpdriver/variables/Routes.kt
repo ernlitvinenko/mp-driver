@@ -20,6 +20,7 @@ sealed class Routes(val route: String) {
     data object Auth : Route("auth") {
         data object Code : Route(Auth, "code")
     }
+    data object Colors: Route("colors")
 
     data object Home : Route("home") {
         data object Feed : Route(Home, "feed")

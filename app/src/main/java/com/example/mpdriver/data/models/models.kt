@@ -86,7 +86,8 @@ data class AppTask(
     var subtasks: List<AppTask>?,
     val route: AppMarshResponse?,
 
-    val station: AppMstResponse?
+    val station: AppMstResponse?,
+    val param: List<MutableMap<String, String>>? = null
 )
 @Keep
 data class GetMPD_APP_TASK_RESPONSE(
@@ -150,8 +151,17 @@ enum class AppEventKinds {
     ChangeNote,
 
     @SerializedName("8798")
-    CreateUserEvent
+    CreateUserEvent,
+
+    @SerializedName("0")
+    UnSpecified
 }
+
+
+@Keep
+data class DeleteEventRequest (
+    @SerializedName("ID_APP_EVENT") val eventId: String
+)
 
 
 sealed class EventParameters(val parameterIndex: String) {

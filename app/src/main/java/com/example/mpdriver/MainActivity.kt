@@ -12,13 +12,18 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Scaffold
@@ -30,8 +35,12 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.core.app.ActivityCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.NavHost
@@ -67,6 +76,8 @@ import com.google.accompanist.permissions.rememberPermissionState
 import com.yandex.mapkit.MapKitFactory
 import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
+import com.example.mpdriver.components.JDEButton
+import com.example.mpdriver.components.Layout
 import java.util.concurrent.TimeUnit
 import com.example.mpdriver.services.PingServiceWorker
 
@@ -121,7 +132,7 @@ class MainActivity : ComponentActivity() {
                 rememberPermissionState(Manifest.permission.WRITE_EXTERNAL_STORAGE)
 
             if (notificationPermissionState.status.isGranted) {
-                Column {
+                Box(Modifier.fillMaxSize()) {
                     Navigator()
                 }
             }
@@ -206,7 +217,10 @@ fun Navigator(
             }
             Scaffold (
                 topBar = {
-                    Row(Modifier.fillMaxWidth().padding(horizontal = 10.dp), Arrangement.End) {
+                    Row(
+                        Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 10.dp), Arrangement.End) {
                         ActiveButton(onClick = { navigateTo(Routes.Settings) }, text = "Настройки")
                     }
                 }
@@ -228,8 +242,48 @@ fun Navigator(
                 authViewModel = authViewModel,
                 mainViewModel = mainViewModel,
                 navigateTo = {
-                    navigateTo(Routes.Home.Feed)
+                    navigateTo(Routes.Colors)
                 })
+        }
+        composable(Routes.Colors.route) {
+            BackHandler {
+                navigateTo(Routes.Home.Feed)
+            }
+
+            Column(
+                Modifier
+                    .fillMaxSize()
+                    .padding(horizontal = 16.dp), verticalArrangement = Arrangement.Center) {
+                Text(modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 15.dp), text = "Значение цветов", fontSize = 30.sp, textAlign = TextAlign.Center, fontWeight = FontWeight.Bold)
+
+                Text(modifier = Modifier
+                    .border(2.dp, JDEColor.PRIMARY.color, RoundedCornerShape(10.dp))
+                    .padding(20.dp),
+                    text = "Красный цвет – предупреждения об ошибке или просроченной задаче", fontSize = 15.sp
+                )
+                Spacer(modifier = Modifier.height(10.dp))
+                Text(modifier = Modifier
+                    .border(2.dp, JDEColor.WARNING.color, RoundedCornerShape(10.dp))
+                    .padding(20.dp),
+                    text = "Желтый цвет - проблема с выполнение задачи, непрочитанное уведомление", fontSize = 15.sp
+                )
+                Spacer(modifier = Modifier.height(10.dp))
+                Text(modifier = Modifier
+                    .border(2.dp, JDEColor.SUCCESS.color, RoundedCornerShape(10.dp))
+                    .padding(20.dp),
+                    text = "Зеленый цвет - завершенные задачи и события", fontSize = 15.sp
+                )
+                Spacer(modifier = Modifier.height(10.dp))
+                Text(text = "Вы всегда сможете повторно посмотреть значение цветов в настройках", textAlign = TextAlign.Center, color = Color.Gray)
+                Spacer(modifier = Modifier.height(20.dp))
+                ActiveButton(onClick = {
+                    navigateTo(Routes.Home.Feed)
+                }, text = "Перейти к задачам", modifier = Modifier.fillMaxWidth())
+
+            }
+
         }
         composable(Routes.Home.Feed.route) {
             BackHandler(true) {

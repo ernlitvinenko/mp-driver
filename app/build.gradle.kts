@@ -22,6 +22,9 @@ android {
     }
 
     defaultConfig {
+        buildFeatures {
+            buildConfig = true
+        }
         applicationId = "com.example.mpdriver"
         minSdk = 27
         targetSdk = 34
@@ -40,6 +43,9 @@ android {
 
     buildTypes {
         release {
+            buildFeatures {
+                buildConfig = true
+            }
             isMinifyEnabled = true
             isShrinkResources = true
             proguardFiles(
@@ -58,6 +64,7 @@ android {
     }
     buildFeatures {
         compose = true
+        buildConfig = true
     }
     composeOptions {
         kotlinCompilerExtensionVersion = "1.5.1"
@@ -102,5 +109,6 @@ dependencies {
     implementation("com.squareup.retrofit2:converter-gson:2.9.0") // Конвертер JSON
     implementation("androidx.work:work-runtime-ktx:2.9.0")
     implementation("com.github.commandiron:WheelPickerCompose:1.1.11")
+    implementation("com.squareup.retrofit2:converter-scalars:2.1.0")
 
 }

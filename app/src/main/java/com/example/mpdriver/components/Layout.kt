@@ -5,6 +5,7 @@ import android.widget.ProgressBar
 import android.widget.Spinner
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -13,12 +14,15 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -30,8 +34,10 @@ import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -39,6 +45,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
@@ -73,10 +80,11 @@ fun <T> Layout(
     state: LazyListState = rememberLazyListState(),
     itemComponent: @Composable (T) -> Unit
 ) {
+
     LazyColumn(
         modifier
             .fillMaxWidth()
-            .padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp), state = state
+            .padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(10.dp), state = state
     ) {
         item {
             header()
@@ -94,6 +102,24 @@ fun <T> Layout(
         item {
             footer()
         }
+    }
+
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun <T> RefreshableLayout(
+    modifier: Modifier = Modifier,
+    header: @Composable () -> Unit = {},
+    footer: @Composable () -> Unit = {},
+    dataList: List<T>,
+    state: LazyListState = rememberLazyListState(),
+    isRefreshing: Boolean = false,
+    onRefresh: () -> Unit = {},
+    itemComponent: @Composable (T) -> Unit
+) {
+    PullToRefreshBox(isRefreshing = isRefreshing, onRefresh = { onRefresh() }) {
+       Layout(modifier, header, footer, dataList, state, itemComponent)
     }
 }
 
@@ -143,6 +169,12 @@ fun HomeScreenLayout(
         mutableStateOf(0f)
     }
 
+    LaunchedEffect(Unit) {
+        coroutineScope.launch {
+            mainViewModel.fetchUserName()
+        }
+    }
+
     Scaffold(
         topBar = {
             Header(
@@ -184,6 +216,36 @@ fun HomeScreenLayout(
                     color = Color.Gray,
                     textAlign = TextAlign.Center
                 )
+//                GET CURRENT USER NAME
+
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 32.dp, bottom = 8.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .size(64.dp)
+                            .clip(CircleShape)
+                            .background(Color.Gray.copy(alpha = .4f))
+                    ) {
+                        Text(
+                            text = mainViewModel.currentUserName.value?.split(" ")?.getOrNull(1)
+                                ?.replace(".", "") ?: "", modifier = Modifier.align(
+                                Alignment.Center
+                            ), fontWeight = FontWeight.Bold, color = Color.White, fontSize = 18.sp
+                        )
+                    }
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        mainViewModel.currentUserName.value ?: "",
+                        textAlign = TextAlign.Center,
+                        fontSize = 18.sp
+                    )
+
+                }
+
                 Spacer(modifier = Modifier.height(10.dp))
                 Button(
                     onClick = {
@@ -207,6 +269,20 @@ fun HomeScreenLayout(
                     shape = RoundedCornerShape(10.dp)
                 ) {
                     Text(text = "Проверить наличие обновлений", fontWeight = FontWeight.Bold)
+                }
+                Button(
+                    onClick = {
+                        navigateTo(Routes.Colors)
+                    },
+                    Modifier.fillMaxWidth(),
+                    colors = ButtonDefaults.buttonColors(
+                        contentColor = JDEColor.BLACK.color,
+                        containerColor = Color.Transparent
+                    ),
+                    border = BorderStroke(1.dp, JDEColor.BLACK.color),
+                    shape = RoundedCornerShape(10.dp)
+                ) {
+                    Text(text = "Значение цветов", fontWeight = FontWeight.Bold)
                 }
 
                 Button(
@@ -240,7 +316,7 @@ fun HomeScreenLayout(
                         Text(text = "Установка Яндекс навигатора", fontWeight = FontWeight.Bold)
                     }
                 }
-                
+
                 IteractionButton(onClick = { navigateTo(Routes.Settings) }) {
                     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center) {
                         Text(text = "Расширенные настройки", fontWeight = FontWeight.Bold)
@@ -284,10 +360,12 @@ fun HomeScreenLayout(
                         fontWeight = FontWeight.Bold,
                         fontSize = 20.sp
                     )
-                    LinearProgressIndicator(progress = { downloadProgress },
+                    LinearProgressIndicator(
+                        progress = { downloadProgress },
                         Modifier
                             .padding(5.dp)
-                            .fillMaxWidth(), color = JDEColor.PRIMARY.color)
+                            .fillMaxWidth(), color = JDEColor.PRIMARY.color
+                    )
                 } else {
                     Text(
                         if (sheetUpdateData != null) "Доступно новое обновление" else "Нет новых обновлений",

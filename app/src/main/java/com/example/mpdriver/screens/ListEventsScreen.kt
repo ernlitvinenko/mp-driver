@@ -3,6 +3,7 @@ package com.example.mpdriver.screens
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.livedata.observeAsState
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.mpdriver.components.ActiveButton
@@ -13,6 +14,8 @@ import com.example.mpdriver.variables.Route
 import com.example.mpdriver.variables.Routes
 import com.example.mpdriver.variables.datetimeFormatFrom
 import com.example.mpdriver.viewmodels.MainViewModel
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.launch
 import kotlinx.datetime.Clock
 import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.LocalDateTime
@@ -28,6 +31,7 @@ import kotlin.math.abs
 fun ListEventsScreen(model: MainViewModel = viewModel(), navigateTo: (Route) -> Unit) {
 
     val events = model.events.observeAsState()
+    val scope = rememberCoroutineScope()
 
     val nowTime = Clock.System.now()
 
@@ -66,7 +70,14 @@ fun ListEventsScreen(model: MainViewModel = viewModel(), navigateTo: (Route) -> 
         val eventType = PersonalEvent.listOfEvents.find { it.eventName == eventData["type"] }
 
         eventType?.let {
-            EventComponent(eventData = eventData, readonly = true, eventType = it)
+            EventComponent(eventData = eventData, readonly = true, eventType = it, onClickDelete =
+            {
+                scope.launch {
+                    model.deleteEvent(event.id)
+                    model.fetchTaskData()
+                }
+            }
+            )
         }
     }
 }

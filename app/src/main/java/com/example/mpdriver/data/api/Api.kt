@@ -1,10 +1,15 @@
 package com.example.mpdriver.data.api
 
+import android.util.Log
 import androidx.annotation.Keep
+import com.example.mpdriver.BuildConfig
 import com.example.mpdriver.data.database.Tables
 import com.example.mpdriver.data.models.*
+import com.google.gson.GsonBuilder
+import com.google.gson.Strictness
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
+import retrofit2.converter.scalars.ScalarsConverterFactory
 import retrofit2.http.Body
 import retrofit2.http.GET
 import retrofit2.http.Header
@@ -36,8 +41,15 @@ interface ApiService {
         @Body eventData: List<MpdSetAppEventsRequest>
     ): MpdSetAppEventsResponse
 
+//    Удаление Событий
+    @POST("MPD_DELETE_APP_EVENT")
+    suspend fun deleteEvent(
+        @Header("Pragma") dssession: String,
+        @Body deleteData: DeleteEventRequest
+    )
+
     @GET("GetMPDSotrInf")
-    suspend fun getUsername(@Header("Pragma") dssession: String): String
+    suspend fun getUsername(@Header("Pragma") dssession: String): String?
 
     @GET("GetMPDServerTime")
     suspend fun getServerTime(@Header("Pragma") dssession: String): String
@@ -47,19 +59,28 @@ interface ApiService {
 object RetrofitClient {
     private val BASE_URL: String
         get() {
+
+            val buildVariant = BuildConfig.BUILD_TYPE
+
+            if (buildVariant == "debug") {
+                return "http://10.2.100.110:30033/datasnapJDE/rest/TsmAPIvJ/"
+            }
+
+
             val EP = Tables.ServerAPIBaseURL.getValue()
 
             EP?.let {
                 return "https://${it}/driver/"
             }
-
             Tables.ServerAPIBaseURL.setValue("mp-srv.jde.ru")
-
             return "https://mp-srv.jde.ru/driver/"
+
         }
+//    val builder = GsonBuilder().setStrictness(Strictness.LENIENT).create()
     val api: ApiService by lazy {
         val retrofit = Retrofit.Builder()
             .baseUrl(BASE_URL)
+            .addConverterFactory(ScalarsConverterFactory.create())
             .addConverterFactory(GsonConverterFactory.create())
             .build()
         retrofit.create(ApiService::class.java)
