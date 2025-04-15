@@ -270,6 +270,20 @@ fun HomeScreenLayout(
                 ) {
                     Text(text = "Проверить наличие обновлений", fontWeight = FontWeight.Bold)
                 }
+                Button(
+                    onClick = {
+                        navigateTo(Routes.Colors)
+                    },
+                    Modifier.fillMaxWidth(),
+                    colors = ButtonDefaults.buttonColors(
+                        contentColor = JDEColor.BLACK.color,
+                        containerColor = Color.Transparent
+                    ),
+                    border = BorderStroke(1.dp, JDEColor.BLACK.color),
+                    shape = RoundedCornerShape(10.dp)
+                ) {
+                    Text(text = "Значение цветов", fontWeight = FontWeight.Bold)
+                }
 
                 Button(
                     onClick = {

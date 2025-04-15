@@ -8,6 +8,7 @@ import com.example.mpdriver.data.models.AppEventKinds
 import com.example.mpdriver.data.models.AppEventResponse
 import com.example.mpdriver.data.models.AppNote
 import com.example.mpdriver.data.models.AppTask
+import com.example.mpdriver.data.models.DeleteEventRequest
 import com.example.mpdriver.data.models.EventParameters
 import com.example.mpdriver.data.models.MpdSetAppEventsRequest
 import com.example.mpdriver.data.models.TaskStatus
@@ -450,5 +451,15 @@ class MainViewModel : BaseViewModel() {
             acc!! + appTasks!!
         }?.find { sbt -> sbt.id == taskId }
         changeTask(task!!, status, datetime, errorText)
+    }
+
+    suspend fun deleteEvent(eventId: Long) {
+        try {
+            api.deleteEvent(generateSessionHeader(), DeleteEventRequest(eventId.toString()))
+            fetchTaskData()
+        }catch (e: Exception) {
+            Log.e("delete_event", "exception: ${e} ${e.message}" )
+        }
+
     }
 }

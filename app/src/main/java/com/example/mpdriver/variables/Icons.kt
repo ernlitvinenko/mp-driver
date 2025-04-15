@@ -1,6 +1,7 @@
 package com.example.mpdriver.variables
 
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -20,5 +21,10 @@ sealed class Icons {
         @Composable fun COLD(modifier: Modifier = Modifier) {
             Image(painterResource(id = R.drawable.coltransport), contentDescription = "", modifier = modifier)
         }
+    }
+    data object SystemIcons {
+        @Composable fun Bin(modifier: Modifier = Modifier) {
+            Image(painter = painterResource(id = R.drawable.recbin), contentDescription = "", modifier = modifier)
+        } 
     }
 }

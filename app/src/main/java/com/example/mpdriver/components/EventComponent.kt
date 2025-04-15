@@ -10,6 +10,9 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonColors
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.MenuDefaults
@@ -31,6 +34,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.mpdriver.variables.Icons
 import com.example.mpdriver.variables.JDEColor
 import com.example.mpdriver.variables.dateFormat
 import com.example.mpdriver.variables.datetimeFormatFrom
@@ -150,7 +154,8 @@ fun EventComponent(
         mutableStateMapOf()
     },
     readonly: Boolean = false,
-    setError: (Boolean) -> Unit = {}
+    onClickDelete: () -> Unit = {},
+    setError: (Boolean) -> Unit = {},
 ) {
 
     var activeField by remember {
@@ -165,7 +170,15 @@ fun EventComponent(
     val now = Clock.System.now()
     CardComponent(modifier) {
         Text(text = errorText, fontWeight = FontWeight.Bold, fontSize = 20.sp, color = JDEColor.PRIMARY.color)
-        Text(text = eventType.eventName, fontWeight = FontWeight.Bold, fontSize = 20.sp)
+        Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+            Text(text = eventType.eventName, fontWeight = FontWeight.Bold, fontSize = 20.sp)
+            if (readonly) {
+                Button(onClick = { onClickDelete() }, colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent, )) {
+                    Icons.SystemIcons.Bin()
+                }
+            }
+
+        }
         Spacer(modifier = Modifier.padding(top = 20.dp))
         eventType.fields.forEach {
 

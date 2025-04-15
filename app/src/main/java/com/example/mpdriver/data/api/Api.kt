@@ -41,6 +41,13 @@ interface ApiService {
         @Body eventData: List<MpdSetAppEventsRequest>
     ): MpdSetAppEventsResponse
 
+//    Удаление Событий
+    @POST("MPD_DELETE_APP_EVENT")
+    suspend fun deleteEvent(
+        @Header("Pragma") dssession: String,
+        @Body deleteData: DeleteEventRequest
+    )
+
     @GET("GetMPDSotrInf")
     suspend fun getUsername(@Header("Pragma") dssession: String): String?
 

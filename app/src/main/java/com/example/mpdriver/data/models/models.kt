@@ -151,8 +151,17 @@ enum class AppEventKinds {
     ChangeNote,
 
     @SerializedName("8798")
-    CreateUserEvent
+    CreateUserEvent,
+
+    @SerializedName("0")
+    UnSpecified
 }
+
+
+@Keep
+data class DeleteEventRequest (
+    @SerializedName("ID_APP_EVENT") val eventId: String
+)
 
 
 sealed class EventParameters(val parameterIndex: String) {
